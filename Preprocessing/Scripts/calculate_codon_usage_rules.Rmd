@@ -66,7 +66,7 @@ Ce.codon.freq <- Ce.dat %>%
 ## *B. malayi*
 Source: [*Brugia* Codon Usage Table](http://big.icp.ucl.ac.be/~opperd/private/C_U_B_%20Table.html)  
 ```{r Brugia}
-Bm.dat <- read_csv('../Data/Bm_optimal_usage_counts.csv', 
+Bm.dat <- read_csv('../Data/Bm_usage_counts.csv', 
                    quote = "", 
                    col_types = 'ccd'
 )

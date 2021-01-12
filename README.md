@@ -16,7 +16,7 @@ This repository contains the preprocessing scripts for generating necessary inpu
 ## App Preprocessing
 This subfolder contains preprocessing scripts for the Wild Worm Codon Adapter App. 
 
-First, the code calculates relative adaptation indeces for both *Strongyloides*, *C. elegans*, and *B. malayi* based on previously published codon count data. For *Strongyloides*, codon occurrence values are from highly expressed S. ratti transcripts [1]. For *C. elegans*, values are from genes with the highest bias toward translationally optimal codons [2]. Codon frequency rates for *B. malayi* are based on count data from the [*Brugia* Codon Usage Table](http://big.icp.ucl.ac.be/~opperd/private/C_U_B_%20Table.html). The relative adaptiveness values of every possible codon was generated as follows: individual codons were scored by calculating their relative adaptivness: (the frequency that codon "i" encodes amino acid "AA") / (the frequency of the codon most often used for encoding amino acid "AA"). 
+First, the code calculates relative adaptation indeces for both *Strongyloides*, *C. elegans*, and *B. malayi* based on previously published codon count data. For *Strongyloides*, codon occurrence values are from highly expressed S. ratti transcripts [1]. For *C. elegans*, values are from genes with the highest bias toward translationally optimal codons [2]. Codon frequency rates for *B. malayi* are based on count data from *Brugia malayi* codon usage table accessed at the [Codon Usage Database](http://www.kazusa.or.jp/codon/). The relative adaptiveness values of every possible codon was generated as follows: individual codons were scored by calculating their relative adaptivness: (the frequency that codon "i" encodes amino acid "AA") / (the frequency of the codon most often used for encoding amino acid "AA"). 
 
 Next, optimal codon lookup tables are generated. For *S. ratti*, *C. elegans*, and *B. malayi*, optimal codons were defined as the codon with the highest relative adaptiveness value for each amino acid. For *Pristionchus* species, optimal codons were defined by codon usage bias calculations based on the top 10% highly expressed *P. pacificus* genes [5].
   
@@ -37,7 +37,7 @@ This subfolder contains  scripts (in an RMarkdown file) that generate analyses a
 * Codon Usage Patterns:  
   - *Strongyloides spp*: [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/)
   - *Pristionchus spp*: [Han *et al* (2020)](https://www.genetics.org/content/216/4/947)
-  - *Brugia malayi*: [*Brugia* Codon Usage Table](http://big.icp.ucl.ac.be/~opperd/private/C_U_B_%20Table.html)
+  - *Brugia malayi*: [Codon Usage Database](http://www.kazusa.or.jp/codon/).
   - *C. elegans*: [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)
   
 ## License  
