@@ -1,26 +1,32 @@
-# This script generates lookup tables for optimal codons in different
-# worm species, including:
-# *Strongyloides spp.*  
-# *C. elegans*
-# *Pristionchus pacificus*
-# *Brugia spp*
+---
+title: "Calculate Codon Usage Rules"
+author: "astrasb"
+date: "1/12/2021"
+output: html_document
+---
+# Introduction
+This script generates lookup tables for optimal codons in different
+worm species, including:  
+  -  *Strongyloides spp.*
+  -  *C. elegans*
+  -  *Pristionchus pacificus*
+  -  *Brugia spp*
 
-# First, species-specific counts of codon occurances are used to calculate 
-# the frequency each codon "i" encodes amino acid "AA"
-# These values are passed to the quantification of relative adaptiveness, 
-# the first step for calculating codon adaptation index.
-# These relative adaptiveness values are filtered to find the codon with the 
-# highest value per amino acid, and those "optimal" codons are saved in a .csv
-# file for use in the Wild Worm Codon Adaptor App
+First, species-specific counts of codon occurances are used to calculate
+the frequency each codon "i" encodes amino acid "AA". These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those "optimal" codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.  
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(magrittr)
 library(seqinr)
+```
 
+# Code
 
-# Strongyloides ----
-# Load S. ratti count data
-# Source: Mitreva et al 2006; counts taken from 50 most common expressed sequence tag clusters (putative genes)
+## *Strongyloides* species
+Source: [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/); counts taken from 50 most common expressed sequence tag clusters (putative genes).   
+```{r Strongyloides}
 Sr.dat <- read_csv('../Data/Sr_top50_usage_counts.csv',
                    quote = "",
                    col_types = 'fcd')
@@ -35,10 +41,11 @@ Sr.codon.freq <- Sr.dat %>%
     dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
     dplyr::rename("Sr_optimal" = "Frequency") %>%
     dplyr::select(!Count)
+```
 
-# C. elegans ----
-# Load C. elegans count data
-# Soruce: Sharp and Bradnam, 1997; https://www.ncbi.nlm.nih.gov/books/NBK20194/
+## *C. elegans*
+Source: [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)   
+```{r C_elegans}
 Ce.dat <- read_csv('../Data/Ce_usage_counts.csv', 
                    quote = "", 
                    col_types = 'ccd'
@@ -54,10 +61,11 @@ Ce.codon.freq <- Ce.dat %>%
     dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
     dplyr::rename("Ce_optimal" = "Frequency") %>%
     dplyr::select(!Count)
+```
 
-# B. malayi ----
-# Load B. malayi count data
-# Source: http://big.icp.ucl.ac.be/~opperd/private/C_U_B_%20Table.html
+## *B. malayi*
+Source: [*Brugia* Codon Usage Table](http://big.icp.ucl.ac.be/~opperd/private/C_U_B_%20Table.html)  
+```{r Brugia}
 Bm.dat <- read_csv('../Data/Bm_optimal_usage_counts.csv', 
                    quote = "", 
                    col_types = 'ccd'
@@ -73,8 +81,11 @@ Bm.codon.freq <- Bm.dat %>%
     dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
     dplyr::rename("Bm_optimal" = "Frequency") %>%
     dplyr::select(!Count)
+```
 
-
+## Generate Relative Adaptiveness Charts for each species
+Calculate the relative adaptiveness of each codon for each species and save.  
+```{r reladaptiveness}
 # Merge species ----
 codon_usage_chart <- dplyr::full_join(Sr.codon.freq, 
                                       Ce.codon.freq,
@@ -85,9 +96,7 @@ codon_usage_chart <- dplyr::full_join(Sr.codon.freq,
 
 # Generate Relative Adaptiveness Charts for each species ----
 ## Calculate the relative adaptiveness of each codon for each species. 
-## Note: this computation is done by the Strongyloides
-## Codon Adapter App - it is replicated here so users can easily access the 
-## relative adaptiveness values.
+
 Sr_codonChart <- Sr.codon.freq %>%
     dplyr::select(AA, Codon, Sr_optimal) %>%
     dplyr::mutate(Codon = tolower(Codon)) %>%
@@ -113,12 +122,12 @@ rel_adaptiveness_chart <- dplyr::full_join(Sr_codonChart, Ce_codonChart,
 
 write_csv(rel_adaptiveness_chart,
           path = "../Outputs/rel_adaptiveness_chart.csv")
+```
 
-# Generate Lookup Tables for each species ----
-
-## For each species, filter the relative adaptiveness chart
-## to generate a lookup table with the "optimal" codon
-
+## Generate Optimal Codon Lookup Tables for each species
+For each species, filter the relative adaptiveness chart to generate a lookup table with the "optimal" codon. Then, load *P. pacificus* data, which already comes as a list of the optimal codons.  
+*P. pacificus* Source: Han *et al* 2020 https://www.genetics.org/content/216/4/947; top 10% highly expressed genes.  
+```{r buildLUT}
 ### Strongyloides
 Sr_codonLut <- Sr_codonChart %>%
     dplyr::filter(Sr_relAdapt == 1) %>%
@@ -142,7 +151,7 @@ Bm_codonLut <- Bm_codonChart %>%
 
 ### P. pacificus
 #### P. pacificus data already comes as a list of the optimal codons
-#### Load P. pacificus list of codons used in 3% highly expressed genes
+#### Load P. pacificus list of codons used in 10% highly expressed genes
 #### Source: Han *et al* 2020 https://www.genetics.org/content/216/4/947
 Pp_codonLut <- read_csv('../Data/Pp_optimal_codons.csv', 
                           quote = "", 
@@ -158,3 +167,5 @@ codon_lookup_tbl <- dplyr::full_join(Sr_codonLut, Ce_codonLut,
 
 write_csv(codon_lookup_tbl,
           path = "../Outputs/codon_lut.csv")
+```
+
