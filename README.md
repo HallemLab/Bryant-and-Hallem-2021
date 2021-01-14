@@ -1,5 +1,5 @@
 # Wild Worm Codon Adapter Preprocessing & Analysis
-Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-based Shiny app for automatic codon optimzation and analysis based on codon usage rules in "wild" worm species, including: *Strongyloididae* species, *Pristionchus* species, *Brugia malayai*, as well as custom codon usage rules provided by users. 
+Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-based Shiny app for automatic codon optimzation and analysis based on codon usage rules in "wild" worm species, including: *Strongyloididae* species, *Pristionchus* species, *Brugia malayi*, as well as custom codon usage rules provided by users. 
 
 ## Table of Contents  
 1. [General Information](#general-information)
