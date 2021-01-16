@@ -58,6 +58,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
             Sr = '../Data/Sr_Codon_Usage_Report.xlsx',
             Sp = '../Data/Sp_Codon_Usage_Report.xlsx',
             Sv = '../Data/Sv_Codon_Usage_Report.xlsx',
+            Bm = '../Data/Bm_Codon_Usage_Report.xlsx',
             Ce = '../Data/Ce_Codon_Usage_Report.xlsx')
   dat.genomic <- sapply(temp, read_excel, 
                         sheet = 1, 
@@ -83,7 +84,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     #dplyr::relocate(geneID, .before = everything())
     
   })
-  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Ce")
+  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Bm", "Ce")
   
 }
 ```
@@ -110,6 +111,12 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     as_tibble_col(column_name = "Sr_CAI") %>%
     add_column(dat.genomic.df, .)
   
+   dat.genomic.df <- dat.genomic.cleaned %>%
+    map("Bm_CAI") %>%
+    unlist() %>%
+    as_tibble_col(column_name = "Bm_CAI") %>%
+    add_column(dat.genomic.df, .)
+  
   dat.genomic.df <- dat.genomic.cleaned %>%
     map("Ce_CAI") %>%
     unlist() %>%
@@ -131,6 +138,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
       transcriptID %in% dat.genomic$Sr$geneID ~ 'Sr',
       transcriptID %in% dat.genomic$Sp$geneID ~ 'Sp',
       transcriptID %in% dat.genomic$Sv$geneID ~ 'Sv',
+      transcriptID %in% dat.genomic$Bm$geneID ~ 'Bm',
       transcriptID %in% dat.genomic$Ce$geneID ~ 'Ce',
     ))
   dat.genomic.df <- group_by(dat.genomic.df, species)
@@ -159,7 +167,8 @@ dat.genomic.df <- suppressWarnings(
 species.specific.dat.df <- dat.genomic.df %>%
   dplyr::mutate(species_CAI = case_when(
     species == 'Ce' ~ Ce_CAI,
-    species != 'Ce' ~ Sr_CAI
+    species == 'Bm' ~ Bm_CAI,
+    TRUE ~ Sr_CAI
   )) %>%
   dplyr::mutate(outgroup_CAI = case_when(
     species == 'Ce' ~ Sr_CAI,
@@ -180,11 +189,11 @@ plot_distributions <- function(dat,
   dat %>%
     ggplot(aes(x = x, y = after_stat(ndensity), color = species)) +
     geom_freqpoly(bins = 50) +
-    scale_color_manual(values = c("seagreen4", "steelblue4", 
+    scale_color_manual(values = c("seagreen4", "grey4","steelblue4", 
                                   "coral4", "darkgoldenrod4", 
                                   "darkorchid4"),
                        name = "Species",
-                       labels = c("C. elegans", "S. papillosus", 
+                       labels = c("B. malayi","C. elegans", "S. papillosus", 
                                   "S. ratti", "S. stercoralis",
                                   "S. venezuelensis")) +
     labs(title = title,
@@ -209,7 +218,8 @@ species_adaptiveness_plot <- plot_distributions(species.specific.dat.df,
                                                 "Species-wide codon adaptiveness",
                                                 "Codon bias relative to \n genus coding usage rules (CAI)",
                                                 "Strongyloides species values relative to S. ratti usage rules
-       C. elegans values relative to C. elegans usage rules.")
+       C. elegans values relative to C. elegans usage rules.
+       B. malayi values relative to B. malayi ussage rules.")
 
 species_adaptiveness_plot
 ```
@@ -261,6 +271,10 @@ Take genome-wide CAI values, and for each species filter the top 2% and also bot
 ```{r pullPercentiles}
 
 percentile = 0.02
+
+# For following analyses, only look at Strongyloides and C. elegans, not B. malayi
+species.specific.dat.df<-species.specific.dat.df %>%
+  dplyr::filter(species != "Bm")
 
 dat.Top <- species.specific.dat.df %>%
   #dplyr::filter(species != "Ce") %>%
