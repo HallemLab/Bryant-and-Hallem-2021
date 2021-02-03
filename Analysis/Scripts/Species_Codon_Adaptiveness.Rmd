@@ -44,6 +44,13 @@ suppressPackageStartupMessages({
   source('fetch_cDNAseq.R')
 })
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Check for presence of output plots folder, generate if it doesn't exist
+output.path <- "../Outputs"
+if (!dir.exists(output.path)){
+  dir.create(output.path)
+}
+
 ```
 
 # Analysis/Results   
@@ -313,7 +320,9 @@ ggplot(tbl, aes(species_CAI,GC, Description)) +
   scale_color_hue (l = 40) +
    scale_shape_manual(values = c(1:2)) +
   labs(x = "Codon bias relative to genus usage rules",
-       y = "G+C ratio") +
+       y = "G+C ratio",
+       title = "G+C ratio as a function of codon adaptiveness (genus rules)",
+       subtitle = "grey icons = all genes \n colored icons = most and least adapted genes ") +
   theme_bw() +
   theme(plot.title.position = "plot",
         plot.caption.position = "panel",
@@ -344,7 +353,8 @@ ggplot(tbl, aes(outgroup_CAI,GC, Description)) +
   scale_color_hue (l = 40) +
   scale_shape_manual(values = c(1:2)) +
   labs(x = "Codon bias relative to non-genus usage rules",
-       y = "G+C ratio") +
+       y = "G+C ratio",
+       title = "G+C ratio as a function of codon adaptiveness (non-genus rules)") +
   theme_bw() +
   theme(plot.title.position = "plot",
         plot.caption.position = "panel",
@@ -357,6 +367,208 @@ ggplot(tbl, aes(outgroup_CAI,GC, Description)) +
 
 
 ```
+
+
+## RNA-seq Expression of Top/Bottom % Codon Adapted Genes  
+Do genes with the top and bottom 2% of CAI values show particularly high or low expression levels? We might expect that genes with the top 2% of CAI values, where the CAI is based on highly expressed *S. ratti* ESTs might tend to show higher expression levels.  
+
+```{r topbotexpression}
+temp <- c(Ss = '../Data/SsRNAseq_log2cpm_filtered_norm_voom.csv',
+          Sr = '../Data/SrRNAseq_log2cpm_filtered_norm_voom.csv',
+          Sp = '../Data/SpRNAseq_log2cpm_filtered_norm_voom.csv',
+          Sv = '../Data/SvRNAseq_log2cpm_filtered_norm_voom.csv')
+dat.expression <- sapply(temp, read.csv, 
+                      header = TRUE)
+species_names <- names(dat.expression)
+
+dat.Top.expression <- lapply(species_names, function(x) {
+    dat.Top.select <- dplyr::filter(dat.Top, species == x) %>%
+        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
+    
+    subset.expression <- dat.expression[[x]] %>%
+        dplyr::filter(X %in% dat.Top.select$geneID) %>%
+        dplyr::rename(geneID = X) %>%
+        pivot_longer(cols = -geneID,
+                     names_to = "samples",
+                     values_to = "expression") %>%
+    tidyr::separate(samples,c("stage", NA)) %>%
+    dplyr::group_by(geneID, stage) %>%
+    dplyr::summarize(expression = median(expression))
+})
+names(dat.Top.expression) <- species_names
+dat.Top.expression <- map_dfr(dat.Top.expression, bind_rows, .id = "species")
+
+
+dat.Bot.expression <- lapply(species_names, function(x) {
+    dat.Bot.select <- dplyr::filter(dat.Bot, species == x) %>%
+        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
+    
+    subset.expression <- dat.expression[[x]] %>%
+        dplyr::filter(X %in% dat.Bot.select$geneID) %>%
+        dplyr::rename(geneID = X) %>%
+        pivot_longer(cols = -geneID,
+                     names_to = "samples",
+                     values_to = "expression") %>%
+    tidyr::separate(samples,c("stage", NA)) %>%
+    dplyr::group_by(geneID, stage) %>%
+    dplyr::summarize(expression = median(expression))
+})
+names(dat.Bot.expression) <- species_names
+dat.Bot.expression <- map_dfr(dat.Bot.expression, bind_rows, .id = "species")
+
+dat.expression <- lapply(species_names, function(x) {
+    dat.expression[[x]] %>%
+        dplyr::rename(geneID = X) %>%
+        pivot_longer(cols = -geneID,
+                     names_to = "samples",
+                     values_to = "expression") %>%
+    tidyr::separate(samples,c("stage", NA)) %>%
+    dplyr::group_by(geneID, stage) %>%
+    dplyr::summarize(expression = median(expression))
+})
+
+names(dat.expression) <- species_names
+dat.expression <- map_dfr(dat.expression, bind_rows, .id = "species")
+
+```
+
+### Comparing expression in 2% highest and lowest CAI
+``` {r comparingexpressionPlot}
+lapply(species_names, function(x){
+  plotdata.subset1 <- filter(dat.Top.expression, species == x)
+  plotdata.subset2 <- filter(dat.Bot.expression, species == x)
+  plotdata.all <- filter(dat.expression, species == x)
+  
+  plot.df <- bind_rows(HighCAI = plotdata.subset1,
+                       LowCAI = plotdata.subset2,
+                       AllGenes = plotdata.all, .id = "Description")
+ 
+    p.Bot.expression <- ggplot(plot.df) +
+        aes(x=stage, y=expression, color = Description, fill = Description) +
+      geom_violin(show.legend = T, 
+                    alpha = .5,
+                   position =  position_dodge(width = 1),
+                    trim = FALSE) +
+      scale_color_manual(values = c("black", "coral4", "steelblue4")) +
+      scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
+        stat_summary(fun = "median", 
+                     geom = "point", 
+                     shape = 20, 
+                     size = 2,  
+                     position =  position_dodge(width = 1),
+                     show.legend = FALSE) +
+      facet_grid(~stage, scales = "free") +
+        labs(y="log2CPM Expression", x = "Life Stage",
+             title = paste0(x, " - log2 Counts per Million (CPM)"),
+             caption=paste0("produced on ", Sys.time())) +
+        theme_bw() 
+    
+    # suppressMessages(ggsave(paste0(x,"_CAIExpression.pdf"),
+    #                         plot = p.Bot.expression,
+    #                         device = "pdf",
+    #                         height = 4,
+    #                         width = 7,
+    #                         path = output.path,
+    #                         useDingbats=FALSE))
+    
+    p.Bot.expression
+})
+
+```
+
+#### CAI as a function of expression in free-living females  
+Does CAI value correspond with expression in free-living females
+```{r CAIvsCPM}
+
+temp <- lapply(species_names, function(x) {
+    dat.select <- dplyr::filter(species.specific.dat.df, 
+                                    species == x) %>%
+        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) %>%
+      dplyr::ungroup() %>%
+      dplyr::select(geneID, species_CAI)
+    
+    subset.expression <- dat.expression %>%
+      dplyr::filter(species == x)%>%
+      dplyr::filter(stage == "FLF") %>%
+      dplyr::filter(geneID %in% dat.select$geneID)
+    
+    full_join(dat.select, subset.expression, by = "geneID") %>%
+      dplyr::select(!stage)
+})
+names(temp) <- species_names
+
+caiExp.df <- map_dfr(temp, bind_rows, .id = "species")
+
+caiExp.df <- bind_rows(AllGenes = caiExp.df,
+                       HighCAI =  dplyr::filter(caiExp.df, geneID %in% dat.Top.expression$geneID),
+                       LowCAI =  dplyr::filter(caiExp.df, geneID %in% dat.Bot.expression$geneID),
+                       .id = "Description") %>%
+  dplyr::mutate(species = as_factor(species))
+
+caiExp.highExp_plot <- ggplot(caiExp.df) +
+   aes(x=Description, y=expression, color = Description, fill = Description) +
+      geom_violin(show.legend = T, 
+                   position =  position_dodge(width = 1),
+                    trim = FALSE,
+                  color = 'black') +
+  
+      #scale_color_manual(values = c("black", "coral4", "steelblue4")) +
+      scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
+        stat_summary(fun = "median", 
+                     geom = "point", 
+                     shape = 20, 
+                     size = 2,  
+                     position =  position_dodge(width = 1),
+                     color = "black",
+                     show.legend = FALSE) +
+  facet_grid( ~species) +
+  labs(y="log2CPM Expression", x = "Gene subsets (base on CAI value) by species",
+             title =  "log2 Counts per Million (CPM) in free-living female as a function of codon bias",
+       subtitle = "grey = all genes \ncolors = top/bottom 2% CAI",
+             caption=paste0("produced on ", Sys.time())) +
+        theme_bw() +
+  theme(plot.title.position = "plot",
+        plot.caption.position = "panel",
+        plot.title = element_text(face = "bold",
+                                  size = 8, hjust = 0),
+        plot.subtitle = element_text(size = 8),
+        legend.title = element_text(size = 8),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+caiExp.highExp_plot
+
+```
+
+#### 2-way ANOVA of expression
+```{r 2wanova}
+suppressPackageStartupMessages({library(car)})
+cpm.merged <- rbind(dat.expression %>% dplyr::mutate(condition = "AllGenes"),
+                    dat.Top.expression %>% dplyr::mutate(condition = "HighCPM"),
+                    dat.Bot.expression %>% dplyr::mutate(condition = "LowCPM")) %>%
+    dplyr::mutate(condition = as_factor(condition))%>%
+  group_by(species, geneID, condition, stage)
+
+options(contrasts = c("contr.sum", "contr.poly"))
+
+lapply(species_names, function(x) {
+cpm.merged.sub <- filter(cpm.merged, species == x)
+
+res.aov2<- aov(expression ~ condition * stage, data = cpm.merged.sub)
+Anova(res.aov2, type = "III")
+res.aov3<-TukeyHSD(res.aov2, "condition:stage")
+as_tibble(res.aov3$`condition:stage`, rownames = "comparison") %>%
+  separate(col = comparison, into = c("comp1", "LS1", "comp2", "LS2")) %>%
+  dplyr::filter(LS1 == LS2) %>%
+  unite(temp1, comp1, LS1, sep = ":")%>%
+  unite(temp2, comp2, LS2, sep = ":")%>%
+  unite(comparison, temp1, temp2, sep = "-")
+
+})
+```
+
+
 
 
 ## GO Analysis: Top % Codon Adapted Genes
@@ -717,6 +929,130 @@ dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% temp$term_id) %>%
 
 ```
 
+## GO Analysis: Top % Gene Expression
+Generate lists of genes with the highest expression in free-living females in each species, and run GO analysis to see if these genes are enriched for anything interesting. Here, common GO terms are defined as terms that appear in 3 or 4 species, because the results from *S. papillosus* are divergent from the others.  
+```{r functionalEnrichementHighExpression}
+
+gost.results.highexp <- lapply(species_names, function(x) {
+  
+   GO.geneID <- dat.expression %>%
+     ungroup() %>%
+     dplyr::filter(species == x) %>%
+    dplyr::filter(stage == "FLF") %>%
+    dplyr::slice_max(order_by = expression, prop = percentile) 
+  
+  organism = case_when (x == "Ss" ~ "ststerprjeb528",
+                          x == "Sr" ~ "strattprjeb125",
+                          x == "Sp" ~ "stpapiprjeb525",
+                          x == "Sv" ~ "stveneprjeb530",
+                          x == "Ce" ~ "caelegprjna13758")
+   
+  gost.res <- gost(GO.geneID$geneID,
+                     organism = organism, 
+                     evcodes = TRUE,
+                     correction_method = "fdr")
+  
+  })
+names(gost.results.highexp) <- species_names
+    
+enriched.terms.highexp <- find_enrichments(gost.results.highexp)
+highTerms.overlap.highexp <- enriched.terms.highexp %>%
+  bind_rows(.id = "species") %>%
+  dplyr::filter(species != "Ce") %>%
+  find_common_enrichments(.,0.001, 3)
+
+
+```
+
+What GO terms are commonly enriched in highly expressed genes in 3 of 4 species?
+``` {r HighExpressionenriched}
+dplyr::filter(gost.results.highexp$Ss$result, term_id %in% highTerms.overlap.highexp$term_id) %>%
+  dplyr::select(term_id, term_name, intersection)
+
+```
+
+How many GO terms are enriched in both highly expressed sequences and highest Str-codon-adapted sequences?
+```{r HighExpressionenriched.overlap2}
+#Overlap btwn GO terms enriched in highly expressed sequences and highest Str-codon-adapted sequences
+temp <- dplyr::filter(highTerms.overlap.top, 
+                      term_id %in% highTerms.overlap.highexp$term_id)
+dplyr::filter(gost.results.highexp$Ss$result, term_id %in% temp$term_id) %>%
+  dplyr::select(term_id, term_name)
+
+```
+
+How many GO terms are enriched in both highly expressed sequences and poorest Str-codon-adapted sequences?
+```{r HighExpressionenriched.overlap3}
+#Overlap btwn GO terms enriched in highly expressed sequences and poorest Str-codon-adapted sequences
+temp <- dplyr::filter(highTerms.overlap.bot, 
+                      term_id %in% highTerms.overlap.highexp$term_id)
+dplyr::filter(gost.results.highexp$Ss$result, term_id %in% temp$term_id) %>%
+  dplyr::select(term_id, term_name)
+
+```
+
+## GO Analysis: Bottom % Gene Expression
+Generate lists of genes with lowest expression in free-living females in each species, and run GO analysis to see if these genes are enriched for anything interesting. Here, common GO terms are defined as terms that appear in 3 or 4 species, because the results from *S. papillosus* are divergent from the others.  
+```{r functionalEnrichementLowExpression}
+
+gost.results.lowexp <- lapply(species_names, function(x) {
+  
+   GO.geneID <- dat.expression %>%
+     ungroup() %>%
+     dplyr::filter(species == x) %>%
+    dplyr::filter(stage == "FLF") %>%
+    dplyr::slice_max(order_by = desc(expression), prop = percentile) 
+  
+  organism = case_when (x == "Ss" ~ "ststerprjeb528",
+                          x == "Sr" ~ "strattprjeb125",
+                          x == "Sp" ~ "stpapiprjeb525",
+                          x == "Sv" ~ "stveneprjeb530",
+                          x == "Ce" ~ "caelegprjna13758")
+   
+  gost.res <- gost(GO.geneID$geneID,
+                     organism = organism, 
+                     evcodes = TRUE,
+                     correction_method = "fdr")
+  
+  })
+names(gost.results.lowexp) <- species_names
+    
+enriched.terms.lowexp <- find_enrichments(gost.results.lowexp)
+highTerms.overlap.lowexp <- enriched.terms.lowexp %>%
+  bind_rows(.id = "species") %>%
+  dplyr::filter(species != "Ce") %>%
+  find_common_enrichments(.,0.001, 3)
+
+
+```
+
+What GO terms are commonly enriched in poorly expressed genes in 3 of 4 species?
+``` {r LowExpressionenriched}
+dplyr::filter(gost.results.lowexp$Ss$result, term_id %in% highTerms.overlap.lowexp$term_id) %>%
+  dplyr::select(term_id, term_name, intersection)
+
+```
+
+How many GO terms are enriched in both poorly expressed sequences and highest Str-codon-adapted sequences?
+```{r LowExpressionenriched.overlap2}
+#Overlap btwn GO terms enriched in poorly expressed sequences and highest Str-codon-adapted sequences
+temp <- dplyr::filter(highTerms.overlap.top, 
+                      term_id %in% highTerms.overlap.lowexp$term_id)
+dplyr::filter(gost.results.lowexp$Ss$result, term_id %in% temp$term_id) %>%
+  dplyr::select(term_id, term_name)
+
+```
+
+How many GO terms are enriched in both poorly expressed sequences and poorest Str-codon-adapted sequences?
+```{r LowExpressionenriched.overlap3}
+#Overlap btwn GO terms enriched in poorly expressed sequences and poorest Str-codon-adapted sequences
+temp <- dplyr::filter(highTerms.overlap.bot, 
+                      term_id %in% highTerms.overlap.lowexp$term_id)
+dplyr::filter(gost.results.lowexp$Ss$result, term_id %in% temp$term_id) %>%
+  dplyr::select(term_id, term_name)
+
+```
+
 ## Save Files and Plots  
 Saving data and plots generated by the above code.  
 ```{r saveFiles}
@@ -732,6 +1068,13 @@ ggsave('../Outputs/Codon_Adaptiveness_Distributions_by_Species.pdf',
 ggsave('../Outputs/GC_Distributions_by_Species.pdf', 
        plot = species_GC_plot, 
        width = 5.5, height = 4, 
+       units = "in", device = "pdf", 
+       useDingbats = FALSE)
+
+# Save plot of CAI vs FLF expression level
+ggsave('../Outputs/CAIvsFLFlog2CPM_by_Species.pdf', 
+       plot = caiExp.highExp_plot, 
+       width = 5.5, height = 3, 
        units = "in", device = "pdf", 
        useDingbats = FALSE)
 
