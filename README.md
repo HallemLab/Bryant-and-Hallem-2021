@@ -5,10 +5,11 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 1. [General Information](#general-information)
 2. [App Preprocessing](#app-preprocessing)
 3. [Analysis Code](#analysis-code)
-4. [References](#references)
-5. [Sources](#sources)
-6. [License](#license)
-7. [Authors](#authors)
+4. [App Access](#app-access)
+5. [References](#references)
+6. [Sources](#sources)
+7. [License](#license)
+8. [Authors](#authors)
 
 ## General Information
 This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains analysis code used to generate results discussed in Bryant and Hallem (2021). 
@@ -22,7 +23,12 @@ Next, optimal codon lookup tables are generated. For *S. ratti*, *C. elegans*, a
   
 ## Analysis Code  
 This subfolder contains  scripts (in an RMarkdown file) that generate analyses and plots included in Bryant and Hallem (2021). Specifically, these analyses seek to assess genome-wide codon bias patterns in *Strongyloides* species versus *C. elegans.* In brief, FASTA files containing all coding sequences (CDS) for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, and *C. elegans* were downloaded from Wormbase ParaSite (WBPS15) and analyzed using the *Strongyloides* Codon Adapter app. Results are located in the Data folder. Within the RMarkdown file, distributions of GC ratio and codon adaptation index values across species are plotted and statistically compared [3,4]. Then, results for each species are filtered to identify the following 6 functional subsets for each species: 2% with highest and lowest *Str*-CAI values, 2% with highest and lowest GC ratio, and 2% with highest and lowest *Ce*-CAI values. GO analyses of functional subsets are performed using the gprofiler2 package v0.1.9, with a false discovery rate (FDR)-corrected p-value < 0.05. Commonly enriched GO terms in each subset are defined as GO terms that were enriched in all *Strongyloides* species with an FDR-corrected p-value of < 0.001.
-            
+
+## App Access
+To access a stable deployment of the Wild Worm Codon Adapter, please visit: [https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/](https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/)  
+
+To view full source code for the *Strongyloides* RNAseq Browser, please visit the [app repository](https://github.com/astrasb/Wild_Worm_Codon_Adapter). 
+
 ## References
 1. [Mitreva *et al* (2006). Codon usage patterns in Nematoda: analysis based on over 25 million codons in thirty-two species. *Genome Biology* 7: R75](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/). 
 2. [Sharp and Bradnam (1997). Appendix 3: Codon Usage in *C. elegans*. In: *C. elegans* II. 2nd edition; Eds: Riddle, Blumenthal, Meyer *et al*. Cold Spring Harbor Laboratory Press.](https://www.ncbi.nlm.nih.gov/books/NBK20194/).
