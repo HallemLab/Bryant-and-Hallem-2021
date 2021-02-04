@@ -27,7 +27,7 @@ This subfolder contains  scripts (in an RMarkdown file) that generate analyses a
 ## App Access
 To access a stable deployment of the Wild Worm Codon Adapter, please visit: [https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/](https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/)  
 
-To view full source code for the *Strongyloides* RNAseq Browser, please visit the [app repository](https://github.com/astrasb/Wild_Worm_Codon_Adapter). 
+To view full source code for the *Strongyloides* RNAseq Browser, please visit the [app repository](https://github.com/HallemLab/Wild_Worm_Codon_Adapter). 
 
 ## References
 1. [Mitreva *et al* (2006). Codon usage patterns in Nematoda: analysis based on over 25 million codons in thirty-two species. *Genome Biology* 7: R75](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/). 
