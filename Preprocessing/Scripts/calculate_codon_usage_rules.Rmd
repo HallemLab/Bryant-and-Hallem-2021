@@ -1,16 +1,21 @@
 ---
 title: "Calculate Codon Usage Rules"
-author: "astrasb"
-date: "1/12/2021"
-output: html_document
+author: "Astra S. Bryant, PhD"
+date: "2/5/2021"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '3'
 ---
 # Introduction
 This script generates lookup tables for optimal codons in different
 worm species, including:  
   -  *Strongyloides spp.*
-  -  *C. elegans*
+  -  *Caenorhabditis elegans*
   -  *Pristionchus pacificus*
   -  *Brugia spp*
+  -  *Nippostrongylus spp*
 
 First, species-specific counts of codon occurances are used to calculate
 the frequency each codon "i" encodes amino acid "AA". These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those "optimal" codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.  
@@ -83,6 +88,26 @@ Bm.codon.freq <- Bm.dat %>%
     dplyr::select(!Count)
 ```
 
+## *N. basiliensis*
+Source: *Nippostrongylus brasiliensis* codon usage table accessed at [Nematode.net](http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&subnav_selection=codon_usage_tables)
+```{r Nippo}
+Nb.dat <- read_csv('../Data/Nb_usage_counts.csv', 
+                   quote = "", 
+                   col_types = 'ccd'
+)
+
+Nb.codon.freq <- Nb.dat %>%
+    dplyr::mutate(AA = seqinr::a(AA)) %>%
+    dplyr::arrange(AA, Codon) %>%
+    dplyr::mutate(AA = factor(AA)) %>%
+    group_by(AA) %>%
+    dplyr::mutate (Frequency = Count / sum(Count)) %>%
+    dplyr::mutate (Frequency = Frequency *100) %>%
+    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
+    dplyr::rename("Nb_optimal" = "Frequency") %>%
+    dplyr::select(!Count)
+```
+
 ## Generate Relative Adaptiveness Charts for each species
 Calculate the relative adaptiveness of each codon for each species and save.  
 ```{r reladaptiveness}
@@ -92,6 +117,8 @@ codon_usage_chart <- dplyr::full_join(Sr.codon.freq,
                                       by = c("AA", "Codon") 
 )%>%
     dplyr::full_join(Bm.codon.freq,
+                     by = c("AA", "Codon"))%>%
+    dplyr::full_join(Nb.codon.freq,
                      by = c("AA", "Codon"))
 
 # Generate Relative Adaptiveness Charts for each species ----
@@ -115,9 +142,16 @@ Bm_codonChart <- Bm.codon.freq %>%
     group_by(AA) %>%
     dplyr::mutate (Bm_relAdapt = Bm_optimal / max(Bm_optimal))
 
+Nb_codonChart <- Nb.codon.freq %>%
+    dplyr::select(AA, Codon, Nb_optimal) %>%
+    dplyr::mutate(Codon = tolower(Codon)) %>%
+    group_by(AA) %>%
+    dplyr::mutate (Nb_relAdapt = Nb_optimal / max(Nb_optimal))
+
 rel_adaptiveness_chart <- dplyr::full_join(Sr_codonChart, Ce_codonChart,
                                       by = c("AA", "Codon")) %>%
     dplyr::full_join(Bm_codonChart, by = c("AA", "Codon")) %>%
+    dplyr::full_join(Nb_codonChart, by = c("AA", "Codon")) %>%
     dplyr::mutate(Codon = tolower(Codon))
 
 write_csv(rel_adaptiveness_chart,
@@ -149,6 +183,13 @@ Bm_codonLut <- Bm_codonChart %>%
     dplyr::rename(Codon.Bm = Codon) %>%
     ungroup() 
 
+### N. brasiliensis 
+Nb_codonLut <- Nb_codonChart %>%
+    dplyr::filter(Nb_relAdapt == 1) %>%
+    dplyr::select(c(AA, Codon)) %>%
+    dplyr::rename(Codon.Nb = Codon) %>%
+    ungroup() 
+
 ### P. pacificus
 #### P. pacificus data already comes as a list of the optimal codons
 #### Load P. pacificus list of codons used in 10% highly expressed genes
@@ -161,9 +202,10 @@ Pp_codonLut <- read_csv('../Data/Pp_optimal_codons.csv',
     dplyr::rename(Codon.Pp = Codon)
 
 codon_lookup_tbl <- dplyr::full_join(Sr_codonLut, Ce_codonLut,
-                                      by = "AA") %>%
-    dplyr::left_join(Bm_codonLut, by = "AA") %>%
-    dplyr::left_join(Pp_codonLut, by = "AA")
+                                     by = "AA") %>%
+  dplyr::left_join(Bm_codonLut, by = "AA") %>%
+  dplyr::left_join(Nb_codonLut, by = "AA") %>%
+  dplyr::left_join(Pp_codonLut, by = "AA")
 
 write_csv(codon_lookup_tbl,
           path = "../Outputs/codon_lut.csv")

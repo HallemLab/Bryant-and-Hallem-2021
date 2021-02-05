@@ -14,16 +14,17 @@ date: "11/19/2020"
 ---
 
 # Introduction  
-The purpose of this document is to examine codon usage patterns at the genome-wide level and for functional subsets, across four *Strongyloides spp.* and *C. elegans*. 
+The purpose of this document is to examine codon usage patterns at the genome-wide level across four *Strongyloides spp.*, *Brugia malayi*, *Nippostrongylus brasiliensis* and *C. elegans*. In addition, this documents examines codon usage patterns for functional subsets of genes in *Strongyloides* species and *C. elegans*.  
 
-For the functional subsets, six groups are analyzed:  
-1) Top 2% of codon adapted genes in each genome  
-2) Bottom 2% of codon adapted genes in each genome  
-3) Top 2% of GC-rich genes in each genome  
-4) Top 2% of AT-rich genes in each genome  
+For the functional subsets, eight groups are analyzed:  
+  1) Top 2% of codon adapted genes in each genome  
+  2) Bottom 2% of codon adapted genes in each genome  
+  3) Top 2% of GC-rich genes in each genome  
+  4) Top 2% of AT-rich genes in each genome  
+  5) Top 2% of *Strongyloides* genes expressed in free-living adult females.  
 
 # Data Preprocessing  
-Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis* and *C. elegans* were download from Wormbase ParaSite (v15) on November 17, 2020. The .fa files were used as input to the *Strongyloides* Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to *S. ratti* and *C. elegans* was downloaded; these file are uploaded the code chunks below.  
+Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and February 5, 2021. The .fa files were used as input to the *Strongyloides* Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
 
 ```{r setup, echo=FALSE}
 suppressPackageStartupMessages({
@@ -41,6 +42,7 @@ suppressPackageStartupMessages({
   library(Matching)
   library(cowplot)
   library(gprofiler2)
+  library(rcartocolor)
   source('fetch_cDNAseq.R')
 })
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
@@ -65,8 +67,9 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
             Sr = '../Data/Sr_Codon_Usage_Report.xlsx',
             Sp = '../Data/Sp_Codon_Usage_Report.xlsx',
             Sv = '../Data/Sv_Codon_Usage_Report.xlsx',
-            Bm = '../Data/Bm_Codon_Usage_Report.xlsx',
-            Ce = '../Data/Ce_Codon_Usage_Report.xlsx')
+            Nb = '../Data/Nb_Codon_Usage_Report.xlsx',
+            Ce = '../Data/Ce_Codon_Usage_Report.xlsx',
+            Bm = '../Data/Bm_Codon_Usage_Report.xlsx')
   dat.genomic <- sapply(temp, read_excel, 
                         sheet = 1, 
                         skip = 3, 
@@ -81,17 +84,14 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
   # but is no longer required.
   dat.genomic.cleaned <- lapply(dat.genomic, function(x){
     x %>%
-      dplyr::mutate(transcriptID = geneID)
-    # dplyr::rename(transcriptID = geneID) %>%
-    # dplyr::mutate(geneID = str_remove_all(transcriptID, "\\.[0-9]$")) %>%
-    # dplyr::mutate(geneID = str_remove_all(geneID, "[a-c]$")) %>%
-    # dplyr::group_by(geneID) %>%
-    # dplyr::slice_max(n = 1, order_by = str_length(`cDNA sequence`), 
-    #                   with_ties = FALSE) %>%
-    #dplyr::relocate(geneID, .before = everything())
+      dplyr::mutate(transcriptID = geneID) %>%
+      dplyr::mutate(Nb_CAI = if("Nb_CAI" %in% colnames(.)) Nb_CAI else NA
+                    )
+    
+   
     
   })
-  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Bm", "Ce")
+  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Nb", "Ce", "Bm")
   
 }
 ```
@@ -123,6 +123,12 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     unlist() %>%
     as_tibble_col(column_name = "Bm_CAI") %>%
     add_column(dat.genomic.df, .)
+   
+   dat.genomic.df <- dat.genomic.cleaned %>%
+    map("Nb_CAI") %>%
+    unlist() %>%
+    as_tibble_col(column_name = "Nb_CAI") %>%
+    add_column(dat.genomic.df, .)
   
   dat.genomic.df <- dat.genomic.cleaned %>%
     map("Ce_CAI") %>%
@@ -146,6 +152,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
       transcriptID %in% dat.genomic$Sp$geneID ~ 'Sp',
       transcriptID %in% dat.genomic$Sv$geneID ~ 'Sv',
       transcriptID %in% dat.genomic$Bm$geneID ~ 'Bm',
+      transcriptID %in% dat.genomic$Nb$geneID ~ 'Nb',
       transcriptID %in% dat.genomic$Ce$geneID ~ 'Ce',
     ))
   dat.genomic.df <- group_by(dat.genomic.df, species)
@@ -169,20 +176,27 @@ This section takes the calculated codon adaptation index values for all predicte
 dat.genomic.df <- suppressWarnings(
   read.csv("../Data/tidy_genomic_CAI.csv", 
            header = TRUE)) %>%
-  as_tibble() 
+  as_tibble() %>%
+  dplyr::mutate(species = factor(species,
+                                levels = c(
+                                  "Ss","Sr",
+                                  "Sp", "Sv",
+                                  "Nb","Bm",
+                                  "Ce"
+                                )))%>%
+  group_by(species)
 
 species.specific.dat.df <- dat.genomic.df %>%
   dplyr::mutate(species_CAI = case_when(
     species == 'Ce' ~ Ce_CAI,
     species == 'Bm' ~ Bm_CAI,
+    species == 'Nb' ~ Nb_CAI,
     TRUE ~ Sr_CAI
   )) %>%
   dplyr::mutate(outgroup_CAI = case_when(
     species == 'Ce' ~ Sr_CAI,
     species != 'Ce' ~ Ce_CAI
-  )) %>%
-  #dplyr:: select(geneID, species_CAI, species) %>%
-  group_by(species)
+  )) 
 
 
 plot_distributions <- function(dat,
@@ -196,13 +210,17 @@ plot_distributions <- function(dat,
   dat %>%
     ggplot(aes(x = x, y = after_stat(ndensity), color = species)) +
     geom_freqpoly(bins = 50) +
-    scale_color_manual(values = c("seagreen4", "grey4","steelblue4", 
-                                  "coral4", "darkgoldenrod4", 
-                                  "darkorchid4"),
-                       name = "Species",
-                       labels = c("B. malayi","C. elegans", "S. papillosus", 
-                                  "S. ratti", "S. stercoralis",
-                                  "S. venezuelensis")) +
+    scale_color_carto_d(palette = "Bold",
+                        name = "Species",
+                        labels = c("S. stercoralis",
+                                   "S. ratti", 
+                                   "S. papillosus",
+                                   "S. venezuelensis",
+                                   "N. brasiliensis",
+                                   "B. malayi",
+                                   "C. elegans"
+                                   )) +
+  
     labs(title = title,
          subtitle = "Data includes all predicted coding sequences",
          x = xlabel,
@@ -226,6 +244,7 @@ species_adaptiveness_plot <- plot_distributions(species.specific.dat.df,
                                                 "Codon bias relative to \n genus coding usage rules (CAI)",
                                                 "Strongyloides species values relative to S. ratti usage rules
        C. elegans values relative to C. elegans usage rules.
+       N. brasilensis values relative to N. brasilensis usage rules.
        B. malayi values relative to B. malayi ussage rules.")
 
 species_adaptiveness_plot
@@ -279,9 +298,11 @@ Take genome-wide CAI values, and for each species filter the top 2% and also bot
 
 percentile = 0.02
 
-# For following analyses, only look at Strongyloides and C. elegans, not B. malayi
+# For following analyses, only look at Strongyloides and C. elegans, 
+# not B. malayi or N. brasiliensis
 species.specific.dat.df<-species.specific.dat.df %>%
-  dplyr::filter(species != "Bm")
+  dplyr::filter(species != "Bm") %>%
+  dplyr::filter(species != "Nb")
 
 dat.Top <- species.specific.dat.df %>%
   #dplyr::filter(species != "Ce") %>%
@@ -293,7 +314,6 @@ dat.Top <- species.specific.dat.df %>%
 tally(dat.Top)
 
 dat.Bot <- species.specific.dat.df %>%
-  # dplyr::filter(species != "Ce") %>%
   dplyr::mutate(Description = factor("Bot")) %>%
   dplyr::group_by(Description, species) %>%
   dplyr::slice_max(order_by = desc(species_CAI), prop = percentile) %>%
@@ -340,11 +360,6 @@ ggplot(tbl, aes(species_CAI,GC, Description)) +
 #### Non-Genus CAI Plot
 ```{r plotGOI2}
 
-# tbl <- pivot_longer(tbl,
-#              cols = c("species_CAI", "outgroup_CAI"),
-#              names_to = "value",
-#              values_to = "CAI"
-#              )
 ggplot(tbl, aes(outgroup_CAI,GC, Description)) +
   geom_point(mapping = aes(color = species, shape = Description)) +
   #geom_jitter(mapping = aes(color = species), shape = 1) +
