@@ -2790,16 +2790,33 @@ div.tocify {
 
 <div id="introduction" class="section level1">
 <h1><span class="header-section-number">1</span> Introduction</h1>
-<p>This script generates lookup tables for optimal codons in different worm species, including:<br />
-- <em>Strongyloides spp.</em> - <em>Caenorhabditis elegans</em> - <em>Pristionchus pacificus</em> - <em>Brugia spp</em> - <em>Nippostrongylus spp</em></p>
+<p>This script generates lookup tables for optimal codons in different worm species, including:</p>
+<ul>
+<li><em>Strongyloides spp.</em><br />
+</li>
+<li><em>Caenorhabditis elegans</em><br />
+</li>
+<li><em>Pristionchus pacificus</em><br />
+</li>
+<li><em>Brugia spp</em><br />
+</li>
+<li><em>Nippostrongylus spp</em></li>
+</ul>
 <p>First, species-specific counts of codon occurances are used to calculate the frequency each codon “i” encodes amino acid “AA”. These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those “optimal” codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.</p>
 <div id="data-sources" class="section level2">
 <h2><span class="header-section-number">1.1</span> Data Sources</h2>
-<p>Sources for codon count data for the species are as follows:<br />
-- <em>Strongyloides spp.</em> : <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/">Mitreva <em>et al</em> 2006</a>; counts taken from 50 most common expressed sequence tag clusters (putative genes).<br />
-- <em>Caenorhabditis elegans</em> : <a href="https://www.ncbi.nlm.nih.gov/books/NBK20194/">Sharp and Bradnam, 1997</a><br />
-- <em>Pristionchus pacificus</em> : Han <em>et al</em> 2020 <a href="https://www.genetics.org/content/216/4/947" class="uri">https://www.genetics.org/content/216/4/947</a>; top 10% highly expressed genes.<br />
-- <em>Brugia spp</em> : <em>Brugia malayi</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a> - <em>Nippostrongylus spp</em> : <em>Nippostrongylus brasiliensis</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a></p>
+<p>Sources for codon count data or preferred codons for each species are as follows:</p>
+<ul>
+<li><em>Strongyloides spp.</em> : <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/">Mitreva <em>et al</em> 2006</a>; counts taken from 50 most common expressed sequence tag clusters (putative genes).<br />
+</li>
+<li><em>Caenorhabditis elegans</em> : <a href="https://www.ncbi.nlm.nih.gov/books/NBK20194/">Sharp and Bradnam, 1997</a><br />
+</li>
+<li><em>Pristionchus pacificus</em> : Han <em>et al</em> 2020 <a href="https://www.genetics.org/content/216/4/947" class="uri">https://www.genetics.org/content/216/4/947</a>; top 10% highly expressed genes.<br />
+</li>
+<li><em>Brugia spp</em> : <em>Brugia malayi</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a><br />
+</li>
+<li><em>Nippostrongylus spp</em> : <em>Nippostrongylus brasiliensis</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a></li>
+</ul>
 </div>
 </div>
 <div id="code" class="section level1">
