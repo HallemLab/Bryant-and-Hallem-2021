@@ -6,7 +6,9 @@ output:
   html_document:
     df_print: paged
     toc: yes
-    toc_depth: '3'
+    toc_depth: 3
+    toc_float: TRUE
+    number_sections: true
 ---
 # Introduction
 This script generates lookup tables for optimal codons in different
