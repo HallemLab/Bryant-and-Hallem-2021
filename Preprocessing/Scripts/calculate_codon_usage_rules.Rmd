@@ -71,7 +71,7 @@ Ce.codon.freq <- Ce.dat %>%
 ```
 
 ## *B. malayi*
-Source: *Brugia malayi* codon usage table accessed at the [Codon Usage Database](http://www.kazusa.or.jp/codon/)
+Source: *Brugia malayi* codon usage table accessed at [Nematode.net](http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&subnav_selection=codon_usage_tables)
 ```{r Brugia}
 Bm.dat <- read_csv('../Data/Bm_usage_counts.csv', 
                    quote = "", 
