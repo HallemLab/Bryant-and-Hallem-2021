@@ -11,6 +11,7 @@
 
 <meta name="author" content="Astra S. Bryant, PhD" />
 
+<meta name="date" content="2021-02-06" />
 
 <title>Calculate Codon Usage Rules</title>
 
@@ -2782,7 +2783,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Calculate Codon Usage Rules</h1>
 <h4 class="author">Astra S. Bryant, PhD</h4>
-<h4 class="date">2/5/2021</h4>
+<h4 class="date">February 06, 2021</h4>
 
 </div>
 
@@ -2792,164 +2793,84 @@ div.tocify {
 <p>This script generates lookup tables for optimal codons in different worm species, including:<br />
 - <em>Strongyloides spp.</em> - <em>Caenorhabditis elegans</em> - <em>Pristionchus pacificus</em> - <em>Brugia spp</em> - <em>Nippostrongylus spp</em></p>
 <p>First, species-specific counts of codon occurances are used to calculate the frequency each codon “i” encodes amino acid “AA”. These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those “optimal” codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.</p>
+<div id="data-sources" class="section level2">
+<h2><span class="header-section-number">1.1</span> Data Sources</h2>
+<p>Sources for codon count data for the species are as follows:<br />
+- <em>Strongyloides spp.</em> : <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/">Mitreva <em>et al</em> 2006</a>; counts taken from 50 most common expressed sequence tag clusters (putative genes).<br />
+- <em>Caenorhabditis elegans</em> : <a href="https://www.ncbi.nlm.nih.gov/books/NBK20194/">Sharp and Bradnam, 1997</a><br />
+- <em>Pristionchus pacificus</em> : Han <em>et al</em> 2020 <a href="https://www.genetics.org/content/216/4/947" class="uri">https://www.genetics.org/content/216/4/947</a>; top 10% highly expressed genes.<br />
+- <em>Brugia spp</em> : <em>Brugia malayi</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a> - <em>Nippostrongylus spp</em> : <em>Nippostrongylus brasiliensis</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a></p>
+</div>
 </div>
 <div id="code" class="section level1">
 <h1><span class="header-section-number">2</span> Code</h1>
-<div id="strongyloides-species" class="section level2">
-<h2><span class="header-section-number">2.1</span> <em>Strongyloides</em> species</h2>
-<p>Source: <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/">Mitreva <em>et al</em> 2006</a>; counts taken from 50 most common expressed sequence tag clusters (putative genes).</p>
-<pre class="r"><code>Sr.dat &lt;- read_csv('../Data/Sr_top50_usage_counts.csv',
-                   quote = &quot;&quot;,
-                   col_types = 'fcd')
-
-Sr.codon.freq &lt;- Sr.dat %&gt;%
-    dplyr::mutate(AA = seqinr::a(AA)) %&gt;%
-    dplyr::arrange(AA, Codon) %&gt;%
-    dplyr::mutate(AA = factor(AA)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Frequency = Count / sum(Count)) %&gt;%
-    dplyr::mutate (Frequency = Frequency *100) %&gt;%
-    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %&gt;%
-    dplyr::rename(&quot;Sr_optimal&quot; = &quot;Frequency&quot;) %&gt;%
-    dplyr::select(!Count)</code></pre>
-</div>
-<div id="c.-elegans" class="section level2">
-<h2><span class="header-section-number">2.2</span> <em>C. elegans</em></h2>
-<p>Source: <a href="https://www.ncbi.nlm.nih.gov/books/NBK20194/">Sharp and Bradnam, 1997</a></p>
-<pre class="r"><code>Ce.dat &lt;- read_csv('../Data/Ce_usage_counts.csv', 
-                   quote = &quot;&quot;, 
-                   col_types = 'ccd'
-)
-
-Ce.codon.freq &lt;- Ce.dat %&gt;%
-    dplyr::mutate(AA = seqinr::a(AA)) %&gt;%
-    dplyr::arrange(AA, Codon) %&gt;%
-    dplyr::mutate(AA = factor(AA)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Frequency = Count / sum(Count)) %&gt;%
-    dplyr::mutate (Frequency = Frequency *100) %&gt;%
-    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %&gt;%
-    dplyr::rename(&quot;Ce_optimal&quot; = &quot;Frequency&quot;) %&gt;%
-    dplyr::select(!Count)</code></pre>
-</div>
-<div id="b.-malayi" class="section level2">
-<h2><span class="header-section-number">2.3</span> <em>B. malayi</em></h2>
-<p>Source: <em>Brugia malayi</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a></p>
-<pre class="r"><code>Bm.dat &lt;- read_csv('../Data/Bm_usage_counts.csv', 
-                   quote = &quot;&quot;, 
-                   col_types = 'ccd'
-)
-
-Bm.codon.freq &lt;- Bm.dat %&gt;%
-    dplyr::mutate(AA = seqinr::a(AA)) %&gt;%
-    dplyr::arrange(AA, Codon) %&gt;%
-    dplyr::mutate(AA = factor(AA)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Frequency = Count / sum(Count)) %&gt;%
-    dplyr::mutate (Frequency = Frequency *100) %&gt;%
-    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %&gt;%
-    dplyr::rename(&quot;Bm_optimal&quot; = &quot;Frequency&quot;) %&gt;%
-    dplyr::select(!Count)</code></pre>
-</div>
-<div id="n.-basiliensis" class="section level2">
-<h2><span class="header-section-number">2.4</span> <em>N. basiliensis</em></h2>
-<p>Source: <em>Nippostrongylus brasiliensis</em> codon usage table accessed at <a href="http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&amp;subnav_selection=codon_usage_tables">Nematode.net</a></p>
-<pre class="r"><code>Nb.dat &lt;- read_csv('../Data/Nb_usage_counts.csv', 
-                   quote = &quot;&quot;, 
-                   col_types = 'ccd'
-)
-
-Nb.codon.freq &lt;- Nb.dat %&gt;%
-    dplyr::mutate(AA = seqinr::a(AA)) %&gt;%
-    dplyr::arrange(AA, Codon) %&gt;%
-    dplyr::mutate(AA = factor(AA)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Frequency = Count / sum(Count)) %&gt;%
-    dplyr::mutate (Frequency = Frequency *100) %&gt;%
-    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %&gt;%
-    dplyr::rename(&quot;Nb_optimal&quot; = &quot;Frequency&quot;) %&gt;%
-    dplyr::select(!Count)</code></pre>
-</div>
 <div id="generate-relative-adaptiveness-charts-for-each-species" class="section level2">
-<h2><span class="header-section-number">2.5</span> Generate Relative Adaptiveness Charts for each species</h2>
-<p>Calculate the relative adaptiveness of each codon for each species and save.</p>
-<pre class="r"><code># Merge species ----
-codon_usage_chart &lt;- dplyr::full_join(Sr.codon.freq, 
-                                      Ce.codon.freq,
-                                      by = c(&quot;AA&quot;, &quot;Codon&quot;) 
-)%&gt;%
-    dplyr::full_join(Bm.codon.freq,
-                     by = c(&quot;AA&quot;, &quot;Codon&quot;))%&gt;%
-    dplyr::full_join(Nb.codon.freq,
-                     by = c(&quot;AA&quot;, &quot;Codon&quot;))
+<h2><span class="header-section-number">2.1</span> Generate Relative Adaptiveness Charts for each species</h2>
+<p>Load codon frequency data for each species, calculate the relative adaptiveness of each codon for each species, and save.</p>
+<pre class="r"><code>files &lt;- c(Sr = '../Data/Sr_top50_usage_counts.csv',
+           Ce = '../Data/Ce_usage_counts.csv',
+           Bm = '../Data/Bm_usage_counts.csv',
+           Nb = '../Data/Nb_usage_counts.csv'
+    
+)
+
+codon.freq &lt;- lapply(names(files), function(X) {
+    dat &lt;- read_csv(files[X],
+                    quote = &quot;&quot;,
+                    col_types = 'fcd')
+    name &lt;- X
+    dat %&gt;%
+        dplyr::mutate(AA = seqinr::a(AA)) %&gt;%
+        dplyr::arrange(AA, Codon) %&gt;%
+        dplyr::mutate(AA = factor(AA)) %&gt;%
+        group_by(AA) %&gt;%
+        dplyr::mutate (Frequency = Count / sum(Count)) %&gt;%
+        dplyr::mutate (Frequency = Frequency *100) %&gt;%
+        dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %&gt;%
+        dplyr::rename_with(gsub, 
+                           starts_with(&quot;Frequency&quot;), X,
+                           paste0(name,&quot;_optimal&quot;))%&gt;%
+        dplyr::select(!Count)
+}) 
+names(codon.freq) &lt;- names(files)
+
+codon_usage_chart &lt;-reduce(codon.freq, full_join, by = c(&quot;AA&quot;, &quot;Codon&quot;))
 
 # Generate Relative Adaptiveness Charts for each species ----
-## Calculate the relative adaptiveness of each codon for each species. 
+norm2max &lt;- function(x){x/max(x)}
+calc.reladapt &lt;- function(x){
+    x %&gt;%
+        dplyr::select(AA, Codon, ends_with(&quot;optimal&quot;)) %&gt;%
+        
+        dplyr::mutate(Codon = tolower(Codon)) %&gt;%
+        group_by(AA) %&gt;%
+        dplyr::mutate (across(ends_with(&quot;optimal&quot;), 
+            norm2max, .names = &quot;{col}_relAdapt&quot;)) %&gt;%
+        dplyr::rename_with(~gsub(&quot;_optimal_&quot;, &quot;_&quot;, .x))
+}
 
-Sr_codonChart &lt;- Sr.codon.freq %&gt;%
-    dplyr::select(AA, Codon, Sr_optimal) %&gt;%
-    dplyr::mutate(Codon = tolower(Codon)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Sr_relAdapt = Sr_optimal / max(Sr_optimal))
-
-Ce_codonChart &lt;- Ce.codon.freq %&gt;%
-    dplyr::select(AA, Codon, Ce_optimal) %&gt;%
-    dplyr::mutate(Codon = tolower(Codon)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Ce_relAdapt = Ce_optimal / max(Ce_optimal))
-
-Bm_codonChart &lt;- Bm.codon.freq %&gt;%
-    dplyr::select(AA, Codon, Bm_optimal) %&gt;%
-    dplyr::mutate(Codon = tolower(Codon)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Bm_relAdapt = Bm_optimal / max(Bm_optimal))
-
-Nb_codonChart &lt;- Nb.codon.freq %&gt;%
-    dplyr::select(AA, Codon, Nb_optimal) %&gt;%
-    dplyr::mutate(Codon = tolower(Codon)) %&gt;%
-    group_by(AA) %&gt;%
-    dplyr::mutate (Nb_relAdapt = Nb_optimal / max(Nb_optimal))
-
-rel_adaptiveness_chart &lt;- dplyr::full_join(Sr_codonChart, Ce_codonChart,
-                                      by = c(&quot;AA&quot;, &quot;Codon&quot;)) %&gt;%
-    dplyr::full_join(Bm_codonChart, by = c(&quot;AA&quot;, &quot;Codon&quot;)) %&gt;%
-    dplyr::full_join(Nb_codonChart, by = c(&quot;AA&quot;, &quot;Codon&quot;)) %&gt;%
-    dplyr::mutate(Codon = tolower(Codon))
+rel_adaptiveness_chart &lt;- map(codon.freq, calc.reladapt) %&gt;%
+    reduce(full_join, by = c(&quot;AA&quot;, &quot;Codon&quot;))
 
 write_csv(rel_adaptiveness_chart,
           path = &quot;../Outputs/rel_adaptiveness_chart.csv&quot;)</code></pre>
 </div>
 <div id="generate-optimal-codon-lookup-tables-for-each-species" class="section level2">
-<h2><span class="header-section-number">2.6</span> Generate Optimal Codon Lookup Tables for each species</h2>
+<h2><span class="header-section-number">2.2</span> Generate Optimal Codon Lookup Tables for each species</h2>
 <p>For each species, filter the relative adaptiveness chart to generate a lookup table with the “optimal” codon. Then, load <em>P. pacificus</em> data, which already comes as a list of the optimal codons.<br />
 <em>P. pacificus</em> Source: Han <em>et al</em> 2020 <a href="https://www.genetics.org/content/216/4/947" class="uri">https://www.genetics.org/content/216/4/947</a>; top 10% highly expressed genes.</p>
-<pre class="r"><code>### Strongyloides
-Sr_codonLut &lt;- Sr_codonChart %&gt;%
-    dplyr::filter(Sr_relAdapt == 1) %&gt;%
-    dplyr::select(c(AA, Codon)) %&gt;%
-    dplyr::rename(Codon.Sr = Codon) %&gt;%
-    ungroup() 
-
-### C. elegans
-Ce_codonLut &lt;- Ce_codonChart %&gt;%
-    dplyr::filter(Ce_relAdapt == 1) %&gt;%
-    dplyr::select(c(AA, Codon)) %&gt;%
-    dplyr::rename(Codon.Ce = Codon) %&gt;%
-    ungroup() 
-
-### B. malayi 
-Bm_codonLut &lt;- Bm_codonChart %&gt;%
-    dplyr::filter(Bm_relAdapt == 1) %&gt;%
-    dplyr::select(c(AA, Codon)) %&gt;%
-    dplyr::rename(Codon.Bm = Codon) %&gt;%
-    ungroup() 
-
-### N. brasiliensis 
-Nb_codonLut &lt;- Nb_codonChart %&gt;%
-    dplyr::filter(Nb_relAdapt == 1) %&gt;%
-    dplyr::select(c(AA, Codon)) %&gt;%
-    dplyr::rename(Codon.Nb = Codon) %&gt;%
-    ungroup() 
+<pre class="r"><code>codon_lookup_tbl &lt;- rel_adaptiveness_chart %&gt;%
+    dplyr::select(AA, Codon, contains(&quot;relAdapt&quot;)) %&gt;%
+    pivot_longer(-c(AA, Codon),
+                 values_to = &quot;relAdapt&quot;,
+                 names_to = c(&quot;species&quot;,NA),
+                 names_sep = &quot;_&quot;) %&gt;%
+    group_by(species, AA) %&gt;%
+    dplyr::top_n(1,relAdapt)%&gt;%
+    dplyr::select(-relAdapt) %&gt;%
+    pivot_wider(values_from = Codon,
+                names_from = species,
+                names_prefix = &quot;Codon.&quot;)
 
 ### P. pacificus
 #### P. pacificus data already comes as a list of the optimal codons
@@ -2962,11 +2883,8 @@ Pp_codonLut &lt;- read_csv('../Data/Pp_optimal_codons.csv',
     dplyr::mutate(Codon = tolower(Codon)) %&gt;%
     dplyr::rename(Codon.Pp = Codon)
 
-codon_lookup_tbl &lt;- dplyr::full_join(Sr_codonLut, Ce_codonLut,
-                                     by = &quot;AA&quot;) %&gt;%
-  dplyr::left_join(Bm_codonLut, by = &quot;AA&quot;) %&gt;%
-  dplyr::left_join(Nb_codonLut, by = &quot;AA&quot;) %&gt;%
-  dplyr::left_join(Pp_codonLut, by = &quot;AA&quot;)
+codon_lookup_tbl &lt;- dplyr::left_join(codon_lookup_tbl, Pp_codonLut,
+                                     by = &quot;AA&quot;)
 
 write_csv(codon_lookup_tbl,
           path = &quot;../Outputs/codon_lut.csv&quot;)</code></pre>
