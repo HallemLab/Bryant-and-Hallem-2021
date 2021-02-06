@@ -24,7 +24,7 @@ For the functional subsets, eight groups are analyzed:
   5) Top 2% of *Strongyloides* genes expressed in free-living adult females.  
 
 # Data Preprocessing  
-Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and February 5, 2021. The .fa files were used as input to the *Strongyloides* Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
+Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and February 5, 2021. The .fa files were used as input to the Wild Worm Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
 
 ```{r setup, echo=FALSE}
 suppressPackageStartupMessages({
