@@ -5,11 +5,12 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 1. [General Information](#general-information)
 2. [App Preprocessing](#app-preprocessing)
 3. [Analysis Code](#analysis-code)
-4. [App Access](#app-access)
-5. [References](#references)
-6. [Sources](#sources)
-7. [License](#license)
-8. [Authors](#authors)
+4. [Supplemental Files](#supplemental-files)
+5. [App Access](#app-access)
+6. [References](#references)
+7. [Sources](#sources)
+8. [License](#license)
+9. [Authors](#authors)
 
 ## General Information
 This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from Bryant and Hallem (2021). 
@@ -26,7 +27,7 @@ This subfolder contains scripts (in an RMarkdown file) that generate analyses an
 
 Then, results for each species are filtered to identify the following 8 functional subsets for each *Strongyloides* species and *C. elegans*: 2% with highest and lowest *Str*-CAI values, 2% with highest and lowest GC ratio, and 2% with highest and lowest *Ce*-CAI values, genes with 2% highest expression in free-living females (based on data from the *Strongyloides* RNA-seq Browser. GO analyses of functional subsets are performed using the gprofiler2 package v0.1.9, with a false discovery rate (FDR)-corrected p-value < 0.05. Commonly enriched GO terms in each subset are defined as GO terms that were enriched in all *Strongyloides* species with an FDR-corrected p-value of < 0.001.
 
-## Analysis Code  
+## Supplemental Files 
 This subfolder contains supplemental files from Bryant and Hallem (2021). See subfolder README for file details.  
 
 ## App Access
