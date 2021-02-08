@@ -12,7 +12,7 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 8. [Authors](#authors)
 
 ## General Information
-This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains analysis code used to generate results discussed in Bryant and Hallem (2021). 
+This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from Bryant and Hallem (2021). 
 
 ## App Preprocessing
 This subfolder contains preprocessing scripts for the Wild Worm Codon Adapter App. 
@@ -22,9 +22,12 @@ First, the code calculates relative adaptation indeces for *Strongyloides*, *Cae
 Next, optimal codon lookup tables are generated. For *S. ratti*, *C. elegans*, *N. brasiliensis*, and *B. malayi*, optimal codons were defined as the codon with the highest relative adaptiveness value for each amino acid. For *Pristionchus* species, optimal codons were defined by codon usage bias calculations based on the top 10% highly expressed *P. pacificus* genes [(Han *et al* 2020)](https://www.genetics.org/content/216/4/947).
   
 ## Analysis Code  
-This subfolder contains  scripts (in an RMarkdown file) that generate analyses and plots included in Bryant and Hallem (2021). Specifically, these analyses seek to compare genome-wide codon bias patterns in *Strongyloides* species, *N. brasiliensis*, *B. malayi*, and *C. elegans.* In brief, FASTA files containing all coding sequences (CDS) for all species were downloaded from Wormbase ParaSite (WBPS15) and analyzed using the Wild Worm Codon Adapter app. Results are located in the Data folder. Within the RMarkdown file, distributions of GC ratio and codon adaptation index values across species are plotted and statistically compared [(Sharp and Li 1987](https://pubmed.ncbi.nlm.nih.gov/3547335/) ; [Jansen *et al* 2003)](http://www.ncbi.nlm.nih.gov/pubmed/12682375).  
+This subfolder contains scripts (in an RMarkdown file) that generate analyses and plots included in Bryant and Hallem (2021). Specifically, these analyses seek to compare genome-wide codon bias patterns in *Strongyloides* species, *N. brasiliensis*, *B. malayi*, and *C. elegans.* In brief, FASTA files containing all coding sequences (CDS) for all species were downloaded from Wormbase ParaSite (WBPS15) and analyzed using the Wild Worm Codon Adapter app. Results are located in the Data folder. Within the RMarkdown file, distributions of GC ratio and codon adaptation index values across species are plotted and statistically compared [(Sharp and Li 1987](https://pubmed.ncbi.nlm.nih.gov/3547335/) ; [Jansen *et al* 2003)](http://www.ncbi.nlm.nih.gov/pubmed/12682375).  
 
 Then, results for each species are filtered to identify the following 8 functional subsets for each *Strongyloides* species and *C. elegans*: 2% with highest and lowest *Str*-CAI values, 2% with highest and lowest GC ratio, and 2% with highest and lowest *Ce*-CAI values, genes with 2% highest expression in free-living females (based on data from the *Strongyloides* RNA-seq Browser. GO analyses of functional subsets are performed using the gprofiler2 package v0.1.9, with a false discovery rate (FDR)-corrected p-value < 0.05. Commonly enriched GO terms in each subset are defined as GO terms that were enriched in all *Strongyloides* species with an FDR-corrected p-value of < 0.001.
+
+## Analysis Code  
+This subfolder contains supplemental files from Bryant and Hallem (2021). See subfolder README for file details.  
 
 ## App Access
 To access a stable deployment of the Wild Worm Codon Adapter, please visit: [https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/](https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/)  
