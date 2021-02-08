@@ -5,8 +5,8 @@ File S1 contains codon usage frequencies and optimal codons for:
 - highly abundant *S. ratti* expressed sequence tag (EST) transcripts (Mitreva *et al* 2006)
 - highly expressed *C. elegans* genes (Sharp and Bradnam 1997)
 - highly expressed *P. pacificus* genes (Han *et al* 2020)
-- *B. malayi* genes (http://www.kazusa.or.jp/codon/)
-- *N. brasiliensis* contigs (http://www.nematode.net)
+- *B. malayi* contig sequences (http://www.nematode.net)
+- *N. brasiliensis* contig sequences (http://www.nematode.net)
 - all *S. ratti* ESTs (Mitreva *et al* 2006).  
 
 File S2 contains a code freeze for the Wild Worm Codon Adapter.  
