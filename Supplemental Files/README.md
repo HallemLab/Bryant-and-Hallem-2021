@@ -1,3 +1,5 @@
+# Description of Supplemental Files 
+
 File S1 contains codon usage frequencies and optimal codons for:
 
 - highly abundant *S. ratti* expressed sequence tag (EST) transcripts (Mitreva *et al* 2006)
