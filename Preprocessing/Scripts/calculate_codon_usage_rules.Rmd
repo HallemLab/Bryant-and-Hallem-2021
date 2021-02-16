@@ -23,7 +23,7 @@ worm species, including:
 First, species-specific counts of codon occurances are used to calculate
 the frequency each codon "i" encodes amino acid "AA". These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those "optimal" codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.  
 
-## Data Sources
+## Data sources
 Sources for codon count data or preferred codons for each species are as follows:  
 
    -  *Strongyloides spp.* : [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/); counts taken from 50 most common expressed sequence tag clusters (putative genes).  
@@ -41,7 +41,7 @@ library(seqinr)
 
 # Code
 
-## Generate Relative Adaptiveness Charts for each species  
+## Generate relative adaptiveness charts for each species  
 Load codon frequency data for each species, calculate the relative adaptiveness of each codon for each species, and save.  
 
 ```{r reladaptiveness}
@@ -94,7 +94,7 @@ write_csv(rel_adaptiveness_chart,
           path = "../Outputs/rel_adaptiveness_chart.csv")
 ```
 
-## Generate Optimal Codon Lookup Tables for each species
+## Generate optimal codon lookup tables for each species
 For each species, filter the relative adaptiveness chart to generate a lookup table with the "optimal" codon. Then, load *P. pacificus* data, which already comes as a list of the optimal codons.  
 *P. pacificus* Source: Han *et al* 2020 https://www.genetics.org/content/216/4/947; top 10% highly expressed genes.  
 ```{r buildLUT}
@@ -127,5 +127,21 @@ codon_lookup_tbl <- dplyr::left_join(codon_lookup_tbl, Pp_codonLut,
 
 write_csv(codon_lookup_tbl,
           path = "../Outputs/codon_lut.csv")
+```
+
+## Calculate fractional G-C content for each set of optimal codons  
+Take the list of optimal codons for each species, and determine the fractional G-C content.  
+```{r calcOptimals}
+
+calc.sequence.stats <- function(x){
+  paste(x, collapse = "") %>%
+  s2c() %>%
+    GC()
+}
+
+codon_lookup_tbl %>%
+  ungroup() %>%
+  dplyr::select(-AA) %>%
+  dplyr::summarise(across(everything(), calc.sequence.stats))
 ```
 

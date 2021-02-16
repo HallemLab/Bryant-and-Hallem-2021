@@ -17,11 +17,11 @@ date: "11/19/2020"
 The purpose of this document is to examine codon usage patterns at the genome-wide level across four *Strongyloides spp.*, *Brugia malayi*, *Nippostrongylus brasiliensis* and *C. elegans*. In addition, this documents examines codon usage patterns for functional subsets of genes in *Strongyloides* species and *C. elegans*.  
 
 For the functional subsets, eight groups are analyzed:  
-  1) Top 2% of codon adapted genes in each genome  
-  2) Bottom 2% of codon adapted genes in each genome  
-  3) Top 2% of GC-rich genes in each genome  
-  4) Top 2% of AT-rich genes in each genome  
-  5) Top 2% of *Strongyloides* genes expressed in free-living adult females.  
+1) Top 2% of codon adapted genes in each genome  
+2) Bottom 2% of codon adapted genes in each genome  
+3) Top 2% of GC-rich genes in each genome  
+4) Top 2% of AT-rich genes in each genome  
+5) Top 2% of *Strongyloides* genes expressed in free-living adult females.  
 
 # Data Preprocessing  
 Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and February 5, 2021. The .fa files were used as input to the Wild Worm Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
@@ -86,9 +86,9 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     x %>%
       dplyr::mutate(transcriptID = geneID) %>%
       dplyr::mutate(Nb_CAI = if("Nb_CAI" %in% colnames(.)) Nb_CAI else NA
-                    )
+      )
     
-   
+    
     
   })
   names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Nb", "Ce", "Bm")
@@ -118,13 +118,13 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     as_tibble_col(column_name = "Sr_CAI") %>%
     add_column(dat.genomic.df, .)
   
-   dat.genomic.df <- dat.genomic.cleaned %>%
+  dat.genomic.df <- dat.genomic.cleaned %>%
     map("Bm_CAI") %>%
     unlist() %>%
     as_tibble_col(column_name = "Bm_CAI") %>%
     add_column(dat.genomic.df, .)
-   
-   dat.genomic.df <- dat.genomic.cleaned %>%
+  
+  dat.genomic.df <- dat.genomic.cleaned %>%
     map("Nb_CAI") %>%
     unlist() %>%
     as_tibble_col(column_name = "Nb_CAI") %>%
@@ -178,12 +178,12 @@ dat.genomic.df <- suppressWarnings(
            header = TRUE)) %>%
   as_tibble() %>%
   dplyr::mutate(species = factor(species,
-                                levels = c(
-                                  "Ss","Sr",
-                                  "Sp", "Sv",
-                                  "Nb","Bm",
-                                  "Ce"
-                                )))%>%
+                                 levels = c(
+                                   "Ss","Sr",
+                                   "Sp", "Sv",
+                                   "Nb","Bm",
+                                   "Ce"
+                                 )))%>%
   group_by(species)
 
 species.specific.dat.df <- dat.genomic.df %>%
@@ -219,8 +219,8 @@ plot_distributions <- function(dat,
                                    "N. brasiliensis",
                                    "B. malayi",
                                    "C. elegans"
-                                   )) +
-  
+                        )) +
+    
     labs(title = title,
          subtitle = "Data includes all predicted coding sequences",
          x = xlabel,
@@ -252,13 +252,42 @@ species_adaptiveness_plot
 
 Notes re: the above plot - *C. elegans* shows overall lower codon bias compared to the *Strongyloides* species, as predicted from the Mitreva *et al* 2006 results. Reminder that Mitreva *et al* reported that this difference is greatly affected by the GC content; more AT rich speices like the *Strongyloides* species have greater codon usage biases. Also, it looks like the *Strongyloides* subclades (*S. ratti* - *S. stercoralis*; *S. papillosus* - *S. venezuelensis*) cluster together.  
 
-### Kruskal-Wallis Test with Dunn's Post tests for differences in genomic CAI values across species  
+### Kruskal-Wallis Test with Dunn's post-hoc tests for differences in genomic CAI values across species  
 ```{r genomic.CAI.kwtest}
 # Kruskal-Wallis testing of genomic CAI
 one.way <- kruskal.test(species_CAI ~ species, data = species.specific.dat.df)
 
-# Posthoc Dunn tests with Bonferroni adjustment
+# Post-hoc Dunn tests with Bonferroni adjustment
 post.hoc <- dunn.test::dunn.test(species.specific.dat.df$species_CAI, species.specific.dat.df$species, method = "bonferroni")
+
+```
+
+### Kruskal-Wallis Test with Dunn's post-hoc tests for differences in genomic CAI values across species  
+```{r genomic.CAI.kwtest2}
+
+
+# Kruskal-Wallis testing of genomic CAI
+one.way <- kruskal.test(species_CAI ~ species, data = species.specific.dat.df)
+
+# Post-hoc Dunn tests with Bonferroni adjustment
+post.hoc <- dunn.test::dunn.test(species.specific.dat.df$species_CAI, species.specific.dat.df$species, method = "bonferroni")
+
+temp <- species.specific.dat.df %>%
+  dplyr::mutate(group = case_when(
+    species == 'Ss' ~ 'Str',
+    species == 'Sr' ~ 'Str',
+    species == 'Sp' ~ 'Str',
+    species == 'Sv' ~ 'Str',
+    species == 'Nb' ~ 'Nb',
+    species == 'Bm' ~ 'Bm',
+    species == 'Ce' ~ 'Ce'
+  )) %>%
+  dplyr::mutate(group = as_factor(group))
+one.way <- kruskal.test(species_CAI ~ group, data = temp)
+
+post.hoc <- dunn.test::dunn.test(temp$species_CAI, temp$group, method = "bonferroni")
+
+
 ```
 
 ## GC: Genome-wide Distribution Plot
@@ -287,7 +316,6 @@ one.way <- kruskal.test(GC ~ species, data = species.specific.GC.df)
 # Posthoc Dunn tests with Bonferroni adjustment
 post.hoc <- dunn.test::dunn.test(species.specific.GC.df$GC, species.specific.GC.df$species, method = "bonferroni")
 ```
-
 
 ## Analyze Codon Adaptation Index (CAI) values displayed by gene sets of interest  
 
@@ -327,8 +355,8 @@ This section/plot asks questions like: Are the most-codon-adapted *Strongyloides
 #### Genus CAI vs GC Plot
 ```{r plotGOI1}
 tbl <- rbind(dat.Top, dat.Bot) %>%
-  mutate(Description = recode(Description, Top = "Most-adapted genes",
-                              Bot = "Least-adapted genes"))
+  dplyr::mutate(Description = dplyr::recode(Description, Top = "Most-adapted genes",
+                                            Bot = "Least-adapted genes"))
 
 ggplot(tbl, aes(species_CAI,GC, Description)) +
   geom_point(data = species.specific.dat.df,
@@ -338,7 +366,7 @@ ggplot(tbl, aes(species_CAI,GC, Description)) +
   coord_fixed (3) +
   facet_grid( ~species) +
   scale_color_hue (l = 40) +
-   scale_shape_manual(values = c(1:2)) +
+  scale_shape_manual(values = c(1:2)) +
   labs(x = "Codon bias relative to genus usage rules",
        y = "G+C ratio",
        title = "G+C ratio as a function of codon adaptiveness (genus rules)",
@@ -393,19 +421,19 @@ temp <- c(Ss = '../Data/SsRNAseq_log2cpm_filtered_norm_voom.csv',
           Sp = '../Data/SpRNAseq_log2cpm_filtered_norm_voom.csv',
           Sv = '../Data/SvRNAseq_log2cpm_filtered_norm_voom.csv')
 dat.expression <- sapply(temp, read.csv, 
-                      header = TRUE)
+                         header = TRUE)
 species_names <- names(dat.expression)
 
 dat.Top.expression <- lapply(species_names, function(x) {
-    dat.Top.select <- dplyr::filter(dat.Top, species == x) %>%
-        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
-    
-    subset.expression <- dat.expression[[x]] %>%
-        dplyr::filter(X %in% dat.Top.select$geneID) %>%
-        dplyr::rename(geneID = X) %>%
-        pivot_longer(cols = -geneID,
-                     names_to = "samples",
-                     values_to = "expression") %>%
+  dat.Top.select <- dplyr::filter(dat.Top, species == x) %>%
+    dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
+  
+  subset.expression <- dat.expression[[x]] %>%
+    dplyr::filter(X %in% dat.Top.select$geneID) %>%
+    dplyr::rename(geneID = X) %>%
+    pivot_longer(cols = -geneID,
+                 names_to = "samples",
+                 values_to = "expression") %>%
     tidyr::separate(samples,c("stage", NA)) %>%
     dplyr::group_by(geneID, stage) %>%
     dplyr::summarize(expression = median(expression))
@@ -415,15 +443,15 @@ dat.Top.expression <- map_dfr(dat.Top.expression, bind_rows, .id = "species")
 
 
 dat.Bot.expression <- lapply(species_names, function(x) {
-    dat.Bot.select <- dplyr::filter(dat.Bot, species == x) %>%
-        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
-    
-    subset.expression <- dat.expression[[x]] %>%
-        dplyr::filter(X %in% dat.Bot.select$geneID) %>%
-        dplyr::rename(geneID = X) %>%
-        pivot_longer(cols = -geneID,
-                     names_to = "samples",
-                     values_to = "expression") %>%
+  dat.Bot.select <- dplyr::filter(dat.Bot, species == x) %>%
+    dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) 
+  
+  subset.expression <- dat.expression[[x]] %>%
+    dplyr::filter(X %in% dat.Bot.select$geneID) %>%
+    dplyr::rename(geneID = X) %>%
+    pivot_longer(cols = -geneID,
+                 names_to = "samples",
+                 values_to = "expression") %>%
     tidyr::separate(samples,c("stage", NA)) %>%
     dplyr::group_by(geneID, stage) %>%
     dplyr::summarize(expression = median(expression))
@@ -432,11 +460,11 @@ names(dat.Bot.expression) <- species_names
 dat.Bot.expression <- map_dfr(dat.Bot.expression, bind_rows, .id = "species")
 
 dat.expression <- lapply(species_names, function(x) {
-    dat.expression[[x]] %>%
-        dplyr::rename(geneID = X) %>%
-        pivot_longer(cols = -geneID,
-                     names_to = "samples",
-                     values_to = "expression") %>%
+  dat.expression[[x]] %>%
+    dplyr::rename(geneID = X) %>%
+    pivot_longer(cols = -geneID,
+                 names_to = "samples",
+                 values_to = "expression") %>%
     tidyr::separate(samples,c("stage", NA)) %>%
     dplyr::group_by(geneID, stage) %>%
     dplyr::summarize(expression = median(expression))
@@ -457,36 +485,36 @@ lapply(species_names, function(x){
   plot.df <- bind_rows(HighCAI = plotdata.subset1,
                        LowCAI = plotdata.subset2,
                        AllGenes = plotdata.all, .id = "Description")
- 
-    p.Bot.expression <- ggplot(plot.df) +
-        aes(x=stage, y=expression, color = Description, fill = Description) +
-      geom_violin(show.legend = T, 
-                    alpha = .5,
-                   position =  position_dodge(width = 1),
-                    trim = FALSE) +
-      scale_color_manual(values = c("black", "coral4", "steelblue4")) +
-      scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
-        stat_summary(fun = "median", 
-                     geom = "point", 
-                     shape = 20, 
-                     size = 2,  
-                     position =  position_dodge(width = 1),
-                     show.legend = FALSE) +
-      facet_grid(~stage, scales = "free") +
-        labs(y="log2CPM Expression", x = "Life Stage",
-             title = paste0(x, " - log2 Counts per Million (CPM)"),
-             caption=paste0("produced on ", Sys.time())) +
-        theme_bw() 
-    
-    # suppressMessages(ggsave(paste0(x,"_CAIExpression.pdf"),
-    #                         plot = p.Bot.expression,
-    #                         device = "pdf",
-    #                         height = 4,
-    #                         width = 7,
-    #                         path = output.path,
-    #                         useDingbats=FALSE))
-    
-    p.Bot.expression
+  
+  p.Bot.expression <- ggplot(plot.df) +
+    aes(x=stage, y=expression, color = Description, fill = Description) +
+    geom_violin(show.legend = T, 
+                alpha = .5,
+                position =  position_dodge(width = 1),
+                trim = FALSE) +
+    scale_color_manual(values = c("black", "coral4", "steelblue4")) +
+    scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
+    stat_summary(fun = "median", 
+                 geom = "point", 
+                 shape = 20, 
+                 size = 2,  
+                 position =  position_dodge(width = 1),
+                 show.legend = FALSE) +
+    facet_grid(~stage, scales = "free") +
+    labs(y="log2CPM Expression", x = "Life Stage",
+         title = paste0(x, " - log2 Counts per Million (CPM)"),
+         caption=paste0("produced on ", Sys.time())) +
+    theme_bw() 
+  
+  # suppressMessages(ggsave(paste0(x,"_CAIExpression.pdf"),
+  #                         plot = p.Bot.expression,
+  #                         device = "pdf",
+  #                         height = 4,
+  #                         width = 7,
+  #                         path = output.path,
+  #                         useDingbats=FALSE))
+  
+  p.Bot.expression
 })
 
 ```
@@ -496,19 +524,19 @@ Does CAI value correspond with expression in free-living females
 ```{r CAIvsCPM}
 
 temp <- lapply(species_names, function(x) {
-    dat.select <- dplyr::filter(species.specific.dat.df, 
-                                    species == x) %>%
-        dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(geneID, species_CAI)
-    
-    subset.expression <- dat.expression %>%
-      dplyr::filter(species == x)%>%
-      dplyr::filter(stage == "FLF") %>%
-      dplyr::filter(geneID %in% dat.select$geneID)
-    
-    full_join(dat.select, subset.expression, by = "geneID") %>%
-      dplyr::select(!stage)
+  dat.select <- dplyr::filter(species.specific.dat.df, 
+                              species == x) %>%
+    dplyr::mutate(geneID = str_remove_all(geneID, "\\.[0-9]$")) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(geneID, species_CAI)
+  
+  subset.expression <- dat.expression %>%
+    dplyr::filter(species == x)%>%
+    dplyr::filter(stage == "FLF") %>%
+    dplyr::filter(geneID %in% dat.select$geneID)
+  
+  full_join(dat.select, subset.expression, by = "geneID") %>%
+    dplyr::select(!stage)
 })
 names(temp) <- species_names
 
@@ -521,27 +549,27 @@ caiExp.df <- bind_rows(AllGenes = caiExp.df,
   dplyr::mutate(species = as_factor(species))
 
 caiExp.highExp_plot <- ggplot(caiExp.df) +
-   aes(x=Description, y=expression, color = Description, fill = Description) +
-      geom_violin(show.legend = T, 
-                   position =  position_dodge(width = 1),
-                    trim = FALSE,
-                  color = 'black') +
+  aes(x=Description, y=expression, color = Description, fill = Description) +
+  geom_violin(show.legend = T, 
+              position =  position_dodge(width = 1),
+              trim = FALSE,
+              color = 'black') +
   
-      #scale_color_manual(values = c("black", "coral4", "steelblue4")) +
-      scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
-        stat_summary(fun = "median", 
-                     geom = "point", 
-                     shape = 20, 
-                     size = 2,  
-                     position =  position_dodge(width = 1),
-                     color = "black",
-                     show.legend = FALSE) +
+  #scale_color_manual(values = c("black", "coral4", "steelblue4")) +
+  scale_fill_manual(values = c("grey", "coral4", "steelblue4")) +
+  stat_summary(fun = "median", 
+               geom = "point", 
+               shape = 20, 
+               size = 2,  
+               position =  position_dodge(width = 1),
+               color = "black",
+               show.legend = FALSE) +
   facet_grid( ~species) +
   labs(y="log2CPM Expression", x = "Gene subsets (base on CAI value) by species",
-             title =  "log2 Counts per Million (CPM) in free-living female as a function of codon bias",
+       title =  "log2 Counts per Million (CPM) in free-living female as a function of codon bias",
        subtitle = "grey = all genes \ncolors = top/bottom 2% CAI",
-             caption=paste0("produced on ", Sys.time())) +
-        theme_bw() +
+       caption=paste0("produced on ", Sys.time())) +
+  theme_bw() +
   theme(plot.title.position = "plot",
         plot.caption.position = "panel",
         plot.title = element_text(face = "bold",
@@ -562,24 +590,24 @@ suppressPackageStartupMessages({library(car)})
 cpm.merged <- rbind(dat.expression %>% dplyr::mutate(condition = "AllGenes"),
                     dat.Top.expression %>% dplyr::mutate(condition = "HighCPM"),
                     dat.Bot.expression %>% dplyr::mutate(condition = "LowCPM")) %>%
-    dplyr::mutate(condition = as_factor(condition))%>%
+  dplyr::mutate(condition = as_factor(condition))%>%
   group_by(species, geneID, condition, stage)
 
 options(contrasts = c("contr.sum", "contr.poly"))
 
 lapply(species_names, function(x) {
-cpm.merged.sub <- filter(cpm.merged, species == x)
-
-res.aov2<- aov(expression ~ condition * stage, data = cpm.merged.sub)
-Anova(res.aov2, type = "III")
-res.aov3<-TukeyHSD(res.aov2, "condition:stage")
-as_tibble(res.aov3$`condition:stage`, rownames = "comparison") %>%
-  separate(col = comparison, into = c("comp1", "LS1", "comp2", "LS2")) %>%
-  dplyr::filter(LS1 == LS2) %>%
-  unite(temp1, comp1, LS1, sep = ":")%>%
-  unite(temp2, comp2, LS2, sep = ":")%>%
-  unite(comparison, temp1, temp2, sep = "-")
-
+  cpm.merged.sub <- filter(cpm.merged, species == x)
+  
+  res.aov2<- aov(expression ~ condition * stage, data = cpm.merged.sub)
+  Anova(res.aov2, type = "III")
+  res.aov3<-TukeyHSD(res.aov2, "condition:stage")
+  as_tibble(res.aov3$`condition:stage`, rownames = "comparison") %>%
+    separate(col = comparison, into = c("comp1", "LS1", "comp2", "LS2")) %>%
+    dplyr::filter(LS1 == LS2) %>%
+    unite(temp1, comp1, LS1, sep = ":")%>%
+    unite(temp2, comp2, LS2, sep = ":")%>%
+    unite(comparison, temp1, temp2, sep = "-")
+  
 })
 ```
 
@@ -830,119 +858,119 @@ dplyr::filter(gost.results.bot$Ss$result, term_id %in% temp$term_id) %>%
 
 <!-- ``` -->
 
-## GO Analysis: AT-rich *Strongyloides* sequences 
+<!-- ## GO Analysis: AT-rich *Strongyloides* sequences  -->
 
-```{r functionalEnrichementAT}
-dat.ATrich <- species.specific.dat.df %>%
-  #dplyr::filter(species != "Ce") %>%
-  dplyr::mutate(Description = factor("Top")) %>%
-  dplyr::group_by(Description, species) %>%
-  dplyr::slice_max(order_by = desc(GC), prop = percentile) %>%
-  dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce")))
-```
- 
-How many genes in the AT-rich subset are also included in the subset of genes highly adapted for Strongyloides expression?
-```{r ATcommon}
-common.sequences <- inner_join(dat.ATrich, dat.Top) %>%
-  tally()
+<!-- ```{r functionalEnrichementAT} -->
+<!-- dat.ATrich <- species.specific.dat.df %>% -->
+<!--   #dplyr::filter(species != "Ce") %>% -->
+<!--   dplyr::mutate(Description = factor("Top")) %>% -->
+<!--   dplyr::group_by(Description, species) %>% -->
+<!--   dplyr::slice_max(order_by = desc(GC), prop = percentile) %>% -->
+<!--   dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) -->
+<!-- ``` -->
 
-tally(dat.Top) %>%
-  dplyr::filter(species != "Ce") %>%
-  dplyr::mutate(ratio_shared_seq = common.sequences$n/n)
+<!-- How many genes in the AT-rich subset are also included in the subset of genes highly adapted for Strongyloides expression? -->
+<!-- ```{r ATcommon} -->
+<!-- common.sequences <- inner_join(dat.ATrich, dat.Top) %>% -->
+<!--   tally() -->
 
-# Go analysis
-gost.results.ATrich <- run_GO(dat.ATrich)
-enriched.terms.ATrich <- find_enrichments(gost.results.ATrich)
-highTerms.overlap.ATrich <- enriched.terms.ATrich %>%
-  bind_rows(.id = "species") %>%
-  dplyr::filter(species != "Ce") %>%
-  find_common_enrichments(.,0.001, 4)
+<!-- tally(dat.Top) %>% -->
+<!--   dplyr::filter(species != "Ce") %>% -->
+<!--   dplyr::mutate(ratio_shared_seq = common.sequences$n/n) -->
 
-```
+<!-- # Go analysis -->
+<!-- gost.results.ATrich <- run_GO(dat.ATrich) -->
+<!-- enriched.terms.ATrich <- find_enrichments(gost.results.ATrich) -->
+<!-- highTerms.overlap.ATrich <- enriched.terms.ATrich %>% -->
+<!--   bind_rows(.id = "species") %>% -->
+<!--   dplyr::filter(species != "Ce") %>% -->
+<!--   find_common_enrichments(.,0.001, 4) -->
 
-What GO terms are enriched in AT-rich genes?
-``` {r ATenriched}
-dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% highTerms.overlap.ATrich$term_id) %>%
-  dplyr::select(term_id, term_name, intersection)
+<!-- ``` -->
 
-```
+<!-- What GO terms are enriched in AT-rich genes? -->
+<!-- ``` {r ATenriched} -->
+<!-- dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% highTerms.overlap.ATrich$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name, intersection) -->
 
-How many GO terms are enriched in both AT-rich sequences and most Str-codon-adapted sequences?
-``` {r ATenriched.overlap1}
-#
-temp <- dplyr::filter(highTerms.overlap.top, 
-                      term_id %in% highTerms.overlap.ATrich$term_id)
-dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% temp$term_id) %>%
-  dplyr::select(term_id, term_name)
+<!-- ``` -->
 
-```
+<!-- How many GO terms are enriched in both AT-rich sequences and most Str-codon-adapted sequences? -->
+<!-- ``` {r ATenriched.overlap1} -->
+<!-- # -->
+<!-- temp <- dplyr::filter(highTerms.overlap.top,  -->
+<!--                       term_id %in% highTerms.overlap.ATrich$term_id) -->
+<!-- dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% temp$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name) -->
 
-How many GO terms are enriched in both AT-rich sequences and least Str-codon-adapted sequences?
-``` {r ATenriched.overlap2}
-temp <- dplyr::filter(highTerms.overlap.bot, 
-                      term_id %in% highTerms.overlap.ATrich$term_id)
-dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% temp$term_id) %>%
-  dplyr::select(term_id, term_name)
+<!-- ``` -->
 
-```
+<!-- How many GO terms are enriched in both AT-rich sequences and least Str-codon-adapted sequences? -->
+<!-- ``` {r ATenriched.overlap2} -->
+<!-- temp <- dplyr::filter(highTerms.overlap.bot,  -->
+<!--                       term_id %in% highTerms.overlap.ATrich$term_id) -->
+<!-- dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% temp$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name) -->
 
-## GO Analysis: GC-rich *Strongyloides* sequences 
-```{r functionalEnrichementGC}
-dat.GCrich <- species.specific.dat.df %>%
-  #dplyr::filter(species != "Ce") %>%
-  dplyr::mutate(Description = factor("Bot")) %>%
-  dplyr::group_by(Description, species) %>%
-  dplyr::slice_max(order_by = GC, prop = percentile) %>%
-  dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce")))
+<!-- ``` -->
 
-```
+<!-- ## GO Analysis: GC-rich *Strongyloides* sequences  -->
+<!-- ```{r functionalEnrichementGC} -->
+<!-- dat.GCrich <- species.specific.dat.df %>% -->
+<!--   #dplyr::filter(species != "Ce") %>% -->
+<!--   dplyr::mutate(Description = factor("Bot")) %>% -->
+<!--   dplyr::group_by(Description, species) %>% -->
+<!--   dplyr::slice_max(order_by = GC, prop = percentile) %>% -->
+<!--   dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) -->
 
-How many genes in the GC-rich subset are also included in the subset of genes poorly adapted for Strongyloides expression?
-```{r GCcommon}
-common.sequences <- inner_join(dat.GCrich, dat.Bot) %>%
-  dplyr::filter(species != "Ce") %>%
-  tally()
+<!-- ``` -->
 
-tally(dat.Bot) %>%
-  dplyr::filter(species != "Ce") %>%
-  dplyr::mutate(ratio_shared_seq = common.sequences$n/n)
+<!-- How many genes in the GC-rich subset are also included in the subset of genes poorly adapted for Strongyloides expression? -->
+<!-- ```{r GCcommon} -->
+<!-- common.sequences <- inner_join(dat.GCrich, dat.Bot) %>% -->
+<!--   dplyr::filter(species != "Ce") %>% -->
+<!--   tally() -->
 
-# Go analysis
-gost.results.GCrich <- run_GO(dat.GCrich)
-enriched.terms.GCrich <- find_enrichments(gost.results.GCrich)
-highTerms.overlap.GCrich <- enriched.terms.GCrich %>%
-  bind_rows(.id = "species") %>%
-  dplyr::filter(species != "Ce") %>%
-  find_common_enrichments(.,0.001, 4)
+<!-- tally(dat.Bot) %>% -->
+<!--   dplyr::filter(species != "Ce") %>% -->
+<!--   dplyr::mutate(ratio_shared_seq = common.sequences$n/n) -->
 
-```
+<!-- # Go analysis -->
+<!-- gost.results.GCrich <- run_GO(dat.GCrich) -->
+<!-- enriched.terms.GCrich <- find_enrichments(gost.results.GCrich) -->
+<!-- highTerms.overlap.GCrich <- enriched.terms.GCrich %>% -->
+<!--   bind_rows(.id = "species") %>% -->
+<!--   dplyr::filter(species != "Ce") %>% -->
+<!--   find_common_enrichments(.,0.001, 4) -->
 
-What GO terms are enriched in GC-rich genes?
-``` {r GCenriched}
-dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% highTerms.overlap.GCrich$term_id) %>%
-  dplyr::select(term_id, term_name, intersection)
+<!-- ``` -->
 
-```
+<!-- What GO terms are enriched in GC-rich genes? -->
+<!-- ``` {r GCenriched} -->
+<!-- dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% highTerms.overlap.GCrich$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name, intersection) -->
 
-How many GO terms are enriched in both GC-rich sequences and least Str-codon-adapted sequences?
-```{r GCenriched.overlap1}
-#Overlap btwn GO terms enriched in GC-rich sequences and least Str-codon-adapted sequences
-temp <- dplyr::filter(highTerms.overlap.bot, 
-                      term_id %in% highTerms.overlap.GCrich$term_id)
-dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% temp$term_id) %>%
-  dplyr::select(term_id, term_name)
+<!-- ``` -->
 
-```
+<!-- How many GO terms are enriched in both GC-rich sequences and least Str-codon-adapted sequences? -->
+<!-- ```{r GCenriched.overlap1} -->
+<!-- #Overlap btwn GO terms enriched in GC-rich sequences and least Str-codon-adapted sequences -->
+<!-- temp <- dplyr::filter(highTerms.overlap.bot,  -->
+<!--                       term_id %in% highTerms.overlap.GCrich$term_id) -->
+<!-- dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% temp$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name) -->
 
-How many GO terms are enriched in both GC-rich sequences and highest Str-codon-adapted sequences?
-```{r GCenriched.overlap2}
-#Overlap btwn GO terms enriched in GC-rich sequences and highest Str-codon-adapted sequences
-temp <- dplyr::filter(highTerms.overlap.top, 
-                      term_id %in% highTerms.overlap.GCrich$term_id)
-dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% temp$term_id) %>%
-  dplyr::select(term_id, term_name)
+<!-- ``` -->
 
-```
+<!-- How many GO terms are enriched in both GC-rich sequences and highest Str-codon-adapted sequences? -->
+<!-- ```{r GCenriched.overlap2} -->
+<!-- #Overlap btwn GO terms enriched in GC-rich sequences and highest Str-codon-adapted sequences -->
+<!-- temp <- dplyr::filter(highTerms.overlap.top,  -->
+<!--                       term_id %in% highTerms.overlap.GCrich$term_id) -->
+<!-- dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% temp$term_id) %>% -->
+<!--   dplyr::select(term_id, term_name) -->
+
+<!-- ``` -->
 
 ## GO Analysis: Top % Gene Expression
 Generate lists of genes with the highest expression in free-living females in each species, and run GO analysis to see if these genes are enriched for anything interesting. Here, common GO terms are defined as terms that appear in 3 or 4 species, because the results from *S. papillosus* are divergent from the others.  
@@ -950,26 +978,26 @@ Generate lists of genes with the highest expression in free-living females in ea
 
 gost.results.highexp <- lapply(species_names, function(x) {
   
-   GO.geneID <- dat.expression %>%
-     ungroup() %>%
-     dplyr::filter(species == x) %>%
+  GO.geneID <- dat.expression %>%
+    ungroup() %>%
+    dplyr::filter(species == x) %>%
     dplyr::filter(stage == "FLF") %>%
     dplyr::slice_max(order_by = expression, prop = percentile) 
   
   organism = case_when (x == "Ss" ~ "ststerprjeb528",
-                          x == "Sr" ~ "strattprjeb125",
-                          x == "Sp" ~ "stpapiprjeb525",
-                          x == "Sv" ~ "stveneprjeb530",
-                          x == "Ce" ~ "caelegprjna13758")
-   
-  gost.res <- gost(GO.geneID$geneID,
-                     organism = organism, 
-                     evcodes = TRUE,
-                     correction_method = "fdr")
+                        x == "Sr" ~ "strattprjeb125",
+                        x == "Sp" ~ "stpapiprjeb525",
+                        x == "Sv" ~ "stveneprjeb530",
+                        x == "Ce" ~ "caelegprjna13758")
   
-  })
+  gost.res <- gost(GO.geneID$geneID,
+                   organism = organism, 
+                   evcodes = TRUE,
+                   correction_method = "fdr")
+  
+})
 names(gost.results.highexp) <- species_names
-    
+
 enriched.terms.highexp <- find_enrichments(gost.results.highexp)
 highTerms.overlap.highexp <- enriched.terms.highexp %>%
   bind_rows(.id = "species") %>%
@@ -1012,26 +1040,26 @@ Generate lists of genes with lowest expression in free-living females in each sp
 
 gost.results.lowexp <- lapply(species_names, function(x) {
   
-   GO.geneID <- dat.expression %>%
-     ungroup() %>%
-     dplyr::filter(species == x) %>%
+  GO.geneID <- dat.expression %>%
+    ungroup() %>%
+    dplyr::filter(species == x) %>%
     dplyr::filter(stage == "FLF") %>%
     dplyr::slice_max(order_by = desc(expression), prop = percentile) 
   
   organism = case_when (x == "Ss" ~ "ststerprjeb528",
-                          x == "Sr" ~ "strattprjeb125",
-                          x == "Sp" ~ "stpapiprjeb525",
-                          x == "Sv" ~ "stveneprjeb530",
-                          x == "Ce" ~ "caelegprjna13758")
-   
-  gost.res <- gost(GO.geneID$geneID,
-                     organism = organism, 
-                     evcodes = TRUE,
-                     correction_method = "fdr")
+                        x == "Sr" ~ "strattprjeb125",
+                        x == "Sp" ~ "stpapiprjeb525",
+                        x == "Sv" ~ "stveneprjeb530",
+                        x == "Ce" ~ "caelegprjna13758")
   
-  })
+  gost.res <- gost(GO.geneID$geneID,
+                   organism = organism, 
+                   evcodes = TRUE,
+                   correction_method = "fdr")
+  
+})
 names(gost.results.lowexp) <- species_names
-    
+
 enriched.terms.lowexp <- find_enrichments(gost.results.lowexp)
 highTerms.overlap.lowexp <- enriched.terms.lowexp %>%
   bind_rows(.id = "species") %>%
@@ -1073,21 +1101,21 @@ Saving data and plots generated by the above code.
 ```{r saveFiles}
 
 # Save distribution plot of codon adaptivness by species
-ggsave('../Outputs/Codon_Adaptiveness_Distributions_by_Species.pdf', 
+ggsave('../Outputs/Fig_S3A.pdf', 
        plot = species_adaptiveness_plot, 
        width = 5.5, height = 4, 
        units = "in", device = "pdf", 
        useDingbats = FALSE)
 
 # Save distribution plot of GC content by species
-ggsave('../Outputs/GC_Distributions_by_Species.pdf', 
+ggsave('../Outputs/Fig_S3B.pdf', 
        plot = species_GC_plot, 
        width = 5.5, height = 4, 
        units = "in", device = "pdf", 
        useDingbats = FALSE)
 
 # Save plot of CAI vs FLF expression level
-ggsave('../Outputs/CAIvsFLFlog2CPM_by_Species.pdf', 
+ggsave('../Outputs/Fig_S3C.pdf', 
        plot = caiExp.highExp_plot, 
        width = 5.5, height = 3, 
        units = "in", device = "pdf", 
@@ -1105,17 +1133,7 @@ write_excel <- function(data, sheet_facet, filename){
     sheet_data <- data %>%
       dplyr::filter(species == sheet_facet[[x]]) %>%
       dplyr::select(!species)
-    # # Write Data
-    # ## Sheet header
-    # writeData(
-    #   to_download,
-    #   sheet = 1,
-    #   x = c(
-    #     paste0("Strongyloides Codon Usage Report"),
-    #     paste0("Report generated on ", format(Sys.Date(), "%B %d, %Y"))
-    #   )
-    # )
-    # 
+    
     ## Results of codon usage analysis
     writeData(
       to_download,
@@ -1134,59 +1152,124 @@ write_excel <- function(data, sheet_facet, filename){
   saveWorkbook(to_download, file, overwrite=TRUE)
 }  
 
-# Save files with top and bottom percentiles of codon adapted genes per species
-tbl %>%
-      dplyr::select(geneID, species_CAI, GC, Description, species) %>%
-  write_excel(levels(tbl$species), '../Outputs/Percentile_CAI_Genes')
+# Save files with top and bottom percentiles of codon adapted genes per species, 
+# with the GO terms associated with those genes from bioMaRt
+Annt1<- getBM(attributes=c('wbps_transcript_id',
+                           'go_accession'),
+              # grab the ensembl annotations for Wormbase Parasite genes
+              mart = useMart(biomart="parasite_mart", 
+                             dataset = "wbps_gene", 
+                             host="https://parasite.wormbase.org", 
+                             port = 443),
+              filters = c('species_id_1010','wbps_transcript_id'),
+              value = list(c('ststerprjeb528',
+                             'stpapiprjeb525',
+                             'stveneprjeb530'
+              ),
+              tbl$geneID)) %>%
+  as_tibble() %>%
+  group_by(wbps_transcript_id) %>%
+  dplyr::summarise("Term ID" = paste(go_accession, collapse = ", ")) %>%
+  dplyr::rename(geneID = wbps_transcript_id)
+
+Annt2<- getBM(attributes=c('external_gene_id',
+                           'go_accession'),
+              # grab the ensembl annotations for Wormbase Parasite genes
+              mart = useMart(biomart="parasite_mart", 
+                             dataset = "wbps_gene", 
+                             host="https://parasite.wormbase.org", 
+                             port = 443),
+              filters = c('species_id_1010',
+                          'gene_name'),
+              value = list('strattprjeb125',
+                           tbl$geneID)) %>%
+  as_tibble() %>%
+  group_by(external_gene_id) %>%
+  dplyr::summarise("Term ID" = paste(go_accession, collapse = ", ")) %>%
+  dplyr::rename(geneID = external_gene_id)
+
+Annt3<- getBM(attributes=c('wormbase_gseq',
+                           'go_accession'),
+              # grab the ensembl annotations for Wormbase Parasite genes
+              mart = useMart(biomart="parasite_mart", 
+                             dataset = "wbps_gene", 
+                             host="https://parasite.wormbase.org", 
+                             port = 443),
+              filters = c('species_id_1010',
+                          'wormbase_gseqname'),
+              value = list('caelegprjna13758',
+                           tbl$geneID)) %>%
+  as_tibble() %>%
+  group_by(wormbase_gseq) %>%
+  dplyr::summarise("Term ID" = paste(go_accession, collapse = ", ")) %>%
+  dplyr::rename(geneID = wormbase_gseq)
+
+rbind(Annt1, Annt2, Annt3)%>%
+  left_join(tbl, ., by = "geneID")%>%
+  dplyr::select(geneID, species_CAI, GC, Description, species, "Term ID") %>%
+  dplyr::rename("Gene ID" = geneID, 
+                "CAI by genus-specific usage rule" = species_CAI, 
+                "GO term ID" = "Term ID") %>%
+  write_excel(levels(tbl$species), '../Outputs/File_S3')
 
 # Save list of all GO terms for each species, and the genes id that intersect
 # between the GO term and the query
 # for the top and bottom percentile of codon adapted genes
 enriched.GO.terms <- rbind(
   lowCAI = lapply(names(gost.results.bot), function(y){
-  gost.results.bot[[y]]$result %>%
-    as_tibble() %>%
-    dplyr::select(-c(query, significant,parents)) %>%
-    dplyr::arrange(p_value) %>%
-    dplyr::mutate(species = y)
-}) %>% bind_rows %>%
-  dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) %>%
-  dplyr::mutate(Description = "Least-adapted genes")  %>%
-  dplyr::relocate(Description,species,term_id, source, term_name, .before = everything()),
-highCAI = lapply(names(gost.results.top), function(y){
-  gost.results.top[[y]]$result %>%
-    as_tibble() %>%
-    dplyr::select(-c(query, significant,parents)) %>%
-    dplyr::arrange(p_value) %>%
-    dplyr::mutate(species = y)
-}) %>% bind_rows %>%
-  dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) %>%
-  dplyr::mutate(Description = "Most-adapted genes")  %>%
-  dplyr::relocate(Description,species,term_id, source, term_name, .before = everything()) 
+    gost.results.bot[[y]]$result %>%
+      as_tibble() %>%
+      dplyr::select(-c(query, significant,parents)) %>%
+      dplyr::arrange(p_value) %>%
+      dplyr::mutate(species = y)
+  }) %>% bind_rows %>%
+    dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) %>%
+    dplyr::mutate(Description = "Least-adapted genes")  %>%
+    dplyr::relocate(Description,species,term_id, source, term_name, .before = everything()),
+  highCAI = lapply(names(gost.results.top), function(y){
+    gost.results.top[[y]]$result %>%
+      as_tibble() %>%
+      dplyr::select(-c(query, significant,parents)) %>%
+      dplyr::arrange(p_value) %>%
+      dplyr::mutate(species = y)
+  }) %>% bind_rows %>%
+    dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv","Ce"))) %>%
+    dplyr::mutate(Description = "Most-adapted genes")  %>%
+    dplyr::relocate(Description,species,term_id, source, term_name, .before = everything())
 )
 
-write_excel(enriched.GO.terms, levels(enriched.GO.terms$species), '../Outputs/Percentile_GO_Analysis')
 
-# Save list of common GO terms for each species, and the genes id that intersect
+
+write_excel(enriched.GO.terms, levels(enriched.GO.terms$species), '../Outputs/File_S4')
+
+# Save list of GO terms for each species, and the genes id that intersect
 # between the GO term and the query
 # for the top and bottom percentile of codon adapted genes and GT-rich and AT-rich subsets too
 common.terms <- rbind (lowCAI = filter(enriched.GO.terms, term_id %in%  highTerms.overlap.bot$term_id) %>%
-         dplyr::filter(species == "Ss") %>%
-         dplyr::select(term_id, source,term_name, Description),
-       highCAI = filter(enriched.GO.terms, term_id %in%  highTerms.overlap.top$term_id) %>%
-         dplyr::filter(species == "Ss") %>%
-         dplyr::select(term_id, source, term_name, Description),
-       ATrich =  dplyr::filter(gost.results.ATrich$Ss$result, term_id %in% highTerms.overlap.ATrich$term_id) %>%
-         dplyr::select(term_id, source, term_name) %>%
-         dplyr::mutate(Description = "AT-rich genes"),
-       GCrich = dplyr::filter(gost.results.GCrich$Ss$result, term_id %in% highTerms.overlap.GCrich$term_id) %>%
-         dplyr::select(term_id,  source, term_name)%>%
-         dplyr::mutate(Description = "GC-rich genes")
+                         group_by(source, term_id, term_name) %>%
+                         dplyr::select(term_id, source,term_name, intersection) %>%
+                         dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
+                         dplyr::mutate(Description = "Least-adapted genes"),
+                       highCAI = filter(enriched.GO.terms, term_id %in%  highTerms.overlap.top$term_id) %>%
+                         group_by(source, term_id, term_name) %>%
+                         dplyr::select(term_id, source,term_name, intersection) %>%
+                         dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
+                         dplyr::mutate(Description = "Most-adapted genes"),
+                       Highexp =  dplyr::filter(gost.results.highexp$Ss$result, term_id %in% highTerms.overlap.highexp$term_id) %>%
+                         group_by(source, term_id, term_name) %>%
+                         dplyr::select(term_id, source,term_name, intersection) %>%
+                         dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
+                         dplyr::mutate(Description = "Highly-expressed genes"),
+                       PoorExp = dplyr::filter(gost.results.lowexp$Ss$result, term_id %in% highTerms.overlap.lowexp$term_id) %>%
+                         group_by(source, term_id, term_name) %>%
+                         dplyr::select(term_id, source,term_name, intersection) %>%
+                         dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
+                         dplyr::mutate(Description = "Poorly-expressed genes")
 ) %>%
   dplyr::mutate(Description = factor(Description)) %>%
-  dplyr::rename(species = Description)
+  dplyr::rename(species = Description, "Term ID" = term_id, "Term Name" = term_name, Source = source)
 
-  write_excel(common.terms, levels(common.terms$species), '../Outputs/Commonly_Enriched_GO_Terms')
+write_excel(common.terms, levels(common.terms$species), '../Outputs/File_S5')
 
 # Save Functional Enrichment Plots for bottom percentile
 lapply(names(gost.results.bot), function(y){
@@ -1200,7 +1283,7 @@ lapply(names(gost.results.bot), function(y){
                                     size = 8, hjust = 0))
   gost.ggplot.pub<- publish_gostplot(gost.ggplot,
                                      highlight_terms = highTerms.overlap.bot$term_id)
-  ggsave(paste0('../Outputs/',y,'_Bot_CAI_Plot.pdf'), plot = gost.ggplot.pub,
+  ggsave(paste0('../Outputs/Fig_4C_',y,'.pdf'), plot = gost.ggplot.pub,
          width = 7, height = 4,
          units = "in", device = "pdf",
          useDingbats = FALSE)
@@ -1219,7 +1302,7 @@ lapply(names(gost.results.top), function(y){
                                     size = 8, hjust = 0))
   gost.ggplot.pub<- publish_gostplot(gost.ggplot,
                                      highlight_terms = highTerms.overlap.top$term_id)
-  ggsave(paste0('../Outputs/',y,'_Top_CAI_Plot.pdf'), plot = gost.ggplot.pub,
+  ggsave(paste0('../Outputs/Fig_4A_',y,'.pdf'), plot = gost.ggplot.pub,
          width = 7, height = 5,
          units = "in", device = "pdf",
          useDingbats = FALSE)
