@@ -1238,13 +1238,38 @@ enriched.GO.terms <- rbind(
     dplyr::relocate(Description,species,term_id, source, term_name, .before = everything())
 )
 
-
-
 write_excel(enriched.GO.terms, levels(enriched.GO.terms$species), '../Outputs/File_S4')
+
+enriched.GO.terms.expression <- rbind(
+  lowFLF = lapply(names(gost.results.lowexp), function(y){
+    gost.results.lowexp[[y]]$result %>%
+      as_tibble() %>%
+      dplyr::select(-c(query, significant,parents)) %>%
+      dplyr::arrange(p_value) %>%
+      dplyr::mutate(species = y)
+  }) %>% bind_rows %>%
+    dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv"))) %>%
+    dplyr::mutate(Description = "Least-expressed genes")  %>%
+    dplyr::relocate(Description,species,term_id, source, term_name, .before = everything()),
+  highFLF = lapply(names(gost.results.highexp), function(y){
+    gost.results.highexp[[y]]$result %>%
+      as_tibble() %>%
+      dplyr::select(-c(query, significant,parents)) %>%
+      dplyr::arrange(p_value) %>%
+      dplyr::mutate(species = y)
+  }) %>% bind_rows %>%
+    dplyr::mutate(species = factor(species, levels = c("Ss", "Sr", "Sp", "Sv"))) %>%
+    dplyr::mutate(Description = "Most-expressed genes")  %>%
+    dplyr::relocate(Description,species,term_id, source, term_name, .before = everything())
+)
+
+
+
+
 
 # Save list of GO terms for each species, and the genes id that intersect
 # between the GO term and the query
-# for the top and bottom percentile of codon adapted genes and GT-rich and AT-rich subsets too
+# for the top and bottom percentile of codon adapted genes and genes that are highly expressed/poorly expressed in FLF
 common.terms <- rbind (lowCAI = filter(enriched.GO.terms, term_id %in%  highTerms.overlap.bot$term_id) %>%
                          group_by(source, term_id, term_name) %>%
                          dplyr::select(term_id, source,term_name, intersection) %>%
@@ -1255,19 +1280,19 @@ common.terms <- rbind (lowCAI = filter(enriched.GO.terms, term_id %in%  highTerm
                          dplyr::select(term_id, source,term_name, intersection) %>%
                          dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
                          dplyr::mutate(Description = "Most-adapted genes"),
-                       Highexp =  dplyr::filter(gost.results.highexp$Ss$result, term_id %in% highTerms.overlap.highexp$term_id) %>%
+                       Highexp =  dplyr::filter(enriched.GO.terms.expression, term_id %in% highTerms.overlap.highexp$term_id) %>%
                          group_by(source, term_id, term_name) %>%
                          dplyr::select(term_id, source,term_name, intersection) %>%
                          dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
                          dplyr::mutate(Description = "Highly-expressed genes"),
-                       PoorExp = dplyr::filter(gost.results.lowexp$Ss$result, term_id %in% highTerms.overlap.lowexp$term_id) %>%
+                       PoorExp = dplyr::filter(enriched.GO.terms.expression, term_id %in% highTerms.overlap.lowexp$term_id) %>%
                          group_by(source, term_id, term_name) %>%
                          dplyr::select(term_id, source,term_name, intersection) %>%
                          dplyr::summarise(Genes = paste(intersection, collapse = ", ")) %>%
                          dplyr::mutate(Description = "Poorly-expressed genes")
 ) %>%
   dplyr::mutate(Description = factor(Description)) %>%
-  dplyr::rename(species = Description, "Term ID" = term_id, "Term Name" = term_name, Source = source)
+  dplyr::rename(species = Description, "Term ID" = term_id, "Term Name" = term_name, Source = source, "Contributing Genes" = Genes)
 
 write_excel(common.terms, levels(common.terms$species), '../Outputs/File_S5')
 
