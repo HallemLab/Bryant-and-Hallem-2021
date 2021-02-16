@@ -22,5 +22,5 @@ File S5 contains GO terms significantly enriched in all four *Strongyloides* spe
 
 As well as GO terms significantly enriched in at least three *Strongyloides* species for the following functional subsets:
 
-- *S. stercoralis* genes with highest (top 2%) expression in free-living females
-- *S. stercoralis* genes with lowest (bottom 2%) expression in free-living females
+- genes with highest (top 2%) expression in free-living females
+- genes with lowest (bottom 2%) expression in free-living females
