@@ -81,15 +81,17 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
   # values from the longest transcript would be included.
   # This was originally included to permit comparison to gene expression databases
   # but is no longer required.
-  dat.genomic.cleaned <- lapply(dat.genomic, function(x){
-    x %>%
+  dat.genomic.cleaned <- lapply(seq_along(dat.genomic), function(x){
+    
+    dat.genomic[[x]] %>%
       dplyr::mutate(transcriptID = geneID) %>%
       dplyr::mutate(Nb_CAI = if("Nb_CAI" %in% colnames(.)) Nb_CAI else NA) %>%
-      dplyr::mutate(Nb_CAI = if("Bm_CAI" %in% colnames(.)) Bm_CAI else NA) %>%
-      dplyr::mutate(Pp_CAI = if("Pp_CAI" %in% colnames(.)) Pp_CAI else NA)
+      dplyr::mutate(Bm_CAI = if("Bm_CAI" %in% colnames(.)) Bm_CAI else NA) %>%
+      dplyr::mutate(Pp_CAI = if("Pp_CAI" %in% colnames(.)) Pp_CAI else NA) %>%
+      dplyr::mutate(species = names(temp)[[x]])
 
   })
-  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Nb", "Ce", "Bm")
+  names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Nb","Pp", "Ce", "Bm")
   
 }
 ```
@@ -98,6 +100,8 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
 Tidy the genomic CAI values for downstream plotting and analysis. This can be computationally intensive, so if the code is run, a tidy version will get saved at the end of the Markdown file as a .csv file. If that file exists, don't re-run this code.  
 ```{r loadGenomeData, message=FALSE}
 if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
+  
+  
   dat.genomic.df <- dat.genomic.cleaned %>%
     map("geneID") %>%
     unlist() %>%
@@ -146,20 +150,12 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     as_tibble_col(column_name = "GC") %>%
     add_column(dat.genomic.df, .)
   
-  # Add the column that species which species the gene is from
-  # by matching to the original lists of genes, 
-  # the group
-  dat.genomic.df <- dat.genomic.df %>%
-    dplyr::mutate(species = case_when(
-      transcriptID %in% dat.genomic$Ss$geneID ~ 'Ss',
-      transcriptID %in% dat.genomic$Sr$geneID ~ 'Sr',
-      transcriptID %in% dat.genomic$Sp$geneID ~ 'Sp',
-      transcriptID %in% dat.genomic$Sv$geneID ~ 'Sv',
-      transcriptID %in% dat.genomic$Bm$geneID ~ 'Bm',
-      transcriptID %in% dat.genomic$Pp$geneID ~ 'Pp',
-      transcriptID %in% dat.genomic$Nb$geneID ~ 'Nb',
-      transcriptID %in% dat.genomic$Ce$geneID ~ 'Ce',
-    ))
+  dat.genomic.df <- dat.genomic.cleaned %>%
+    map("species") %>%
+    unlist() %>%
+    as_tibble_col(column_name = "species") %>%
+    add_column(dat.genomic.df, .)
+  
   dat.genomic.df <- group_by(dat.genomic.df, species)
   
 }
@@ -270,15 +266,8 @@ post.hoc <- dunn.test::dunn.test(species.specific.dat.df$species_CAI, species.sp
 
 ```
 
-### Kruskal-Wallis Test with Dunn's post-hoc tests for differences in genomic CAI values across species  
+### Kruskal-Wallis Test with Dunn's post-hoc tests for differences in genomic CAI values across genus groups  
 ```{r genomic.CAI.kwtest2}
-
-
-# Kruskal-Wallis testing of genomic CAI
-one.way <- kruskal.test(species_CAI ~ species, data = species.specific.dat.df)
-
-# Post-hoc Dunn tests with Bonferroni adjustment
-post.hoc <- dunn.test::dunn.test(species.specific.dat.df$species_CAI, species.specific.dat.df$species, method = "bonferroni")
 
 temp <- species.specific.dat.df %>%
   dplyr::mutate(group = case_when(
@@ -324,6 +313,29 @@ one.way <- kruskal.test(GC ~ species, data = species.specific.GC.df)
 
 # Posthoc Dunn tests with Bonferroni adjustment
 post.hoc <- dunn.test::dunn.test(species.specific.GC.df$GC, species.specific.GC.df$species, method = "bonferroni")
+```
+
+
+### Kruskal-Wallis Test with Dunn's Post tests for differences in genomic GC values across genus groups  
+```{r genomic.GC.kwtest2}
+
+temp <- species.specific.GC.df %>%
+  dplyr::mutate(group = case_when(
+    species == 'Ss' ~ 'Str',
+    species == 'Sr' ~ 'Str',
+    species == 'Sp' ~ 'Str',
+    species == 'Sv' ~ 'Str',
+    species == 'Nb' ~ 'Nb',
+    species == 'Bm' ~ 'Bm',
+    species == 'Pp' ~ 'Pp',
+    species == 'Ce' ~ 'Ce'
+  )) %>%
+  dplyr::mutate(group = as_factor(group))
+one.way <- kruskal.test(GC ~ group, data = temp)
+
+post.hoc <- dunn.test::dunn.test(temp$GC, temp$group, method = "bonferroni")
+
+
 ```
 
 ## Analyze Codon Adaptation Index (CAI) values displayed by gene sets of interest  
