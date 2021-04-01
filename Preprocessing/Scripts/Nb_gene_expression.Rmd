@@ -1,0 +1,107 @@
+---
+title: "Generate N. brasiliensis Codon Counts"
+author: "Astra S. Bryant, PhD"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: TRUE
+    number_sections: true
+---
+
+# Introduction
+This script uses public RNA-seq expression data for *Nippostrongylus brasiliensis* downloaded from WormBase ParaSite on March 29, 2021 to identify the top 10% of expressed genes across all life stages. This list of genes will then be used to calculate a species-specific count of codon occurange for the top 10% of expressed genes. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+```
+
+# Code  
+
+## Step 1: Identify highly expressed genes
+
+Conditions for RNA-seq samples are as follows:  
+
+* L3 larvae, activated incubation (iL3a)
+* L3 larvae, infective incubation (iL3)
+* L3 larvae, red-blood cell feeding (iL3rbcf)  
+
+Data source: https://parasite.wormbase.org/expression/nippostrongylus_brasiliensis_prjeb511/index.html  
+
+For identifying highly expressed genes in other species, only a single life stage was used. Here, we are finding the median expression across all life stages, and taking the top 10% genes based on that median expression.  
+
+```{r IDGenes}
+dat.per.run <- read.delim('../Data/ERP023010.tpm_per_run.tsv',
+                  skip = 7,
+                  header = FALSE) %>%
+    as_tibble() %>%
+     pivot_longer(cols = -V1,
+                 names_to = "RunID", 
+                 values_to = "TPM") %>%
+    dplyr::group_by(V1) %>%
+    dplyr::summarise(avgTPM = median(TPM))
+
+
+high.exp.genes <- dat.per.run %>%
+    dplyr::slice_max(order_by = avgTPM,
+                     prop = 0.1) %>%
+    dplyr::select(V1) %>%
+    dplyr::rename(geneID = V1)
+
+write_csv(high.exp.genes,
+          path = "../Outputs/Nb_top10_genes.csv")
+```
+
+## Step 2: Find transcript sequences for genes of interest  
+
+```{r fetchTranscripts}
+temp <- getBM(attributes=c('wbps_gene_id', 'coding'),
+                              # grab the cDNA sequences for the given genes from WormBase ParaSite
+                              mart = useMart(biomart="parasite_mart", 
+                                             dataset = "wbps_gene", 
+                                             host="https://parasite.wormbase.org", 
+                                             port = 443),
+                              filters = c('species_id_1010', 
+                                          'wbps_gene_id'),
+                              values = list(c('nibrasprjeb511'),
+                                            high.exp.genes$geneID),
+                              useCache = F) %>%
+                as_tibble()
+```
+
+## Step 3: Calculate and Save Codon Usage Frequencies
+``` {r calcCodonUsage}
+perc.codon.usage <- lapply(temp$coding, function(X) {
+    s2c(X) %>%
+    uco(index = "eff") %>%
+        as.data.frame()
+})
+
+names(perc.codon.usage) <-high.exp.genes$geneID
+
+perc.codon.usage.tbl <-bind_rows(perc.codon.usage, .id = "geneIDs") %>%
+    dplyr::rename(Codon = Var1) %>%
+    dplyr::group_by(Codon) %>%
+    dplyr::summarise(Count = sum(Freq)) %>%
+    dplyr::mutate(Codon = as.character(Codon))
+
+AA<- sapply(perc.codon.usage.tbl$Codon, function(x) {
+    s2c(x) %>%
+        seqinr::translate() %>%
+        seqinr::aaa()
+})
+
+perc.codon.usage.tbl <- perc.codon.usage.tbl %>%
+    add_column(AA = AA, .before = "Codon") %>%
+    dplyr::mutate(Codon = toupper(Codon)) %>%
+    dplyr::arrange(AA, Codon)
+   
+
+write_csv(perc.codon.usage.tbl,
+          path = "../Outputs/Nb_top10_usage_counts.csv")
+```
+

@@ -14,11 +14,11 @@ output:
 This script generates lookup tables for optimal codons in different
 worm species, including:  
 
-  -  *Strongyloides spp.*  
-  -  *Caenorhabditis elegans*  
-  -  *Pristionchus pacificus*  
-  -  *Brugia spp*  
-  -  *Nippostrongylus spp*  
+-  *Strongyloides spp.*  
+-  *Caenorhabditis elegans*  
+-  *Pristionchus pacificus*  
+-  *Brugia spp*  
+-  *Nippostrongylus spp*  
 
 First, species-specific counts of codon occurances are used to calculate
 the frequency each codon "i" encodes amino acid "AA". These values are passed to the quantification of relative adaptiveness, the first step for calculating codon adaptation index. These relative adaptiveness values are filtered to find the codon with the highest value per amino acid, and those "optimal" codons are saved in a .csv file for use in the Wild Worm Codon Adaptor App.  
@@ -26,104 +26,119 @@ the frequency each codon "i" encodes amino acid "AA". These values are passed to
 ## Data sources
 Sources for codon count data or preferred codons for each species are as follows:  
 
-   -  *Strongyloides spp.* : [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/); counts taken from 50 most common expressed sequence tag clusters (putative genes).  
-  -  *Caenorhabditis elegans* : [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)   
-  -  *Pristionchus pacificus* : Han *et al* 2020 https://www.genetics.org/content/216/4/947; top 10% highly expressed genes.  
-  -  *Brugia spp* : *Brugia malayi* codon usage table accessed at [Nematode.net](http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&subnav_selection=codon_usage_tables)  
-  -  *Nippostrongylus spp* : *Nippostrongylus brasiliensis* codon usage table accessed at [Nematode.net](http://www.nematode.net/NN3_frontpage.cgi?navbar_selection=nemagene&subnav_selection=codon_usage_tables)  
+-  *Strongyloides spp.* : [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/); counts taken from 50 most common expressed sequence tag clusters (putative genes).  
+-  *Caenorhabditis elegans* : [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)   
+-  *Pristionchus pacificus* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (7th bin, top ~10%).  
+-  *Brugia malayi* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (7th bin, top ~10%).  
+-  *Nippostrongylus brasiliensis* : codon usage table generated from the 10% of *Nippostrongylus brasiliensis* genes with highest RNA-seq expression levels across samples; RNA-seq expression downloaded from [WormBase ParaSite](https://parasite.wormbase.org/expression/nippostrongylus_brasiliensis_prjeb511/index.html)  
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(magrittr)
 library(seqinr)
+library(purrr)
 ```
 
 # Code
 
 ## Generate relative adaptiveness charts for each species  
-Load codon frequency data for each species, calculate the relative adaptiveness of each codon for each species, and save.  
+Load codon frequency data for each species, calculate the relative adaptiveness of each codon for each species, and save. *C. elegans*, *S. ratti*, and *N. brasiliensis* data are in the form of counts, *B. malayi* and *P. pacificus* data are precalculated into frequency values by cusp, and were provided by the Sommer lab.    
 
 ```{r reladaptiveness}
+
+# Load codon count data and calculate frequency data
 files <- c(Sr = '../Data/Sr_top50_usage_counts.csv',
            Ce = '../Data/Ce_usage_counts.csv',
-           Bm = '../Data/Bm_usage_counts.csv',
-           Nb = '../Data/Nb_usage_counts.csv'
-    
+           Nb = '../Data/Nb_top10_usage_counts.csv'
+           
 )
 
 codon.freq <- lapply(names(files), function(X) {
-    dat <- read_csv(files[X],
-                    quote = "",
-                    col_types = 'fcd')
-    name <- X
-    dat %>%
-        dplyr::mutate(AA = seqinr::a(AA)) %>%
-        dplyr::arrange(AA, Codon) %>%
-        dplyr::mutate(AA = factor(AA)) %>%
-        group_by(AA) %>%
-        dplyr::mutate (Frequency = Count / sum(Count)) %>%
-        dplyr::mutate (Frequency = Frequency *100) %>%
-        dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
-        dplyr::rename_with(gsub, 
-                           starts_with("Frequency"), X,
-                           paste0(name,"_optimal"))%>%
-        dplyr::select(!Count)
+  dat <- read_csv(files[X],
+                  quote = "",
+                  col_types = 'fcd')
+  name <- X
+  dat %>%
+    dplyr::mutate(AA = seqinr::a(AA)) %>%
+    dplyr::arrange(AA, Codon) %>%
+    dplyr::mutate(AA = factor(AA)) %>%
+    group_by(AA) %>%
+    dplyr::mutate (Frequency = Count / sum(Count)) %>%
+    dplyr::mutate (Frequency = Frequency *100) %>%
+    dplyr::mutate (Frequency = signif(Frequency, digits = 9)) %>%
+    dplyr::rename_with(gsub, 
+                       starts_with("Frequency"), X,
+                       paste0(name,"_optimal"))%>%
+    dplyr::select(-Count)
 }) 
 names(codon.freq) <- names(files)
 
-codon_usage_chart <-reduce(codon.freq, full_join, by = c("AA", "Codon"))
+# Load codon count data and calculate frequency data
+files <- c(Bm = '../Data/bmal_bin_cusp',
+           Pp = '../Data/ppa_bin_cusp'
+)
+
+codon.freq2 <- lapply(names(files), function(X) {
+  name <- X
+  dat <- read.delim(files[X],
+                    header = T) %>%
+    as_tibble() %>%
+    dplyr::rename(AA = abv, Codon = nt) %>%
+    dplyr::mutate(freq = freq * 100) %>%
+    dplyr::group_by(AA, Codon) %>%
+    dplyr::arrange(AA, Codon) %>%
+    dplyr::rename_with(gsub, 
+                       starts_with("freq"), X,
+                       paste0(name,"_optimal")) %>%
+    dplyr::filter(bin == 7) %>%
+    dplyr::select(-bin)
+})
+
+names(codon.freq2) <- names(files)
+
+codon.freq <- c(codon.freq, codon.freq2)
+
+codon_usage_chart <-purrr::reduce(codon.freq, 
+                                  full_join, 
+                                  by = c("AA", "Codon")) 
+            
 
 # Generate Relative Adaptiveness Charts for each species ----
 norm2max <- function(x){x/max(x)}
 calc.reladapt <- function(x){
-    x %>%
-        dplyr::select(AA, Codon, ends_with("optimal")) %>%
-        
-        dplyr::mutate(Codon = tolower(Codon)) %>%
-        group_by(AA) %>%
-        dplyr::mutate (across(ends_with("optimal"), 
-            norm2max, .names = "{col}_relAdapt")) %>%
-        dplyr::rename_with(~gsub("_optimal_", "_", .x))
+  x %>%
+    dplyr::select(AA, Codon, ends_with("optimal")) %>%
+    
+    dplyr::mutate(Codon = tolower(Codon)) %>%
+    group_by(AA) %>%
+    dplyr::mutate (across(ends_with("optimal"), 
+                          norm2max, .names = "{col}_relAdapt")) %>%
+    dplyr::rename_with(~gsub("_optimal_", "_", .x))
 }
 
 rel_adaptiveness_chart <- map(codon.freq, calc.reladapt) %>%
-    reduce(full_join, by = c("AA", "Codon"))
+  purrr::reduce(full_join, by = c("AA", "Codon"))
 
 write_csv(rel_adaptiveness_chart,
           path = "../Outputs/rel_adaptiveness_chart.csv")
 ```
 
 ## Generate optimal codon lookup tables for each species
-For each species, filter the relative adaptiveness chart to generate a lookup table with the "optimal" codon. Then, load *P. pacificus* data, which already comes as a list of the optimal codons.  
-*P. pacificus* Source: Han *et al* 2020 https://www.genetics.org/content/216/4/947; top 10% highly expressed genes.  
+For each species, filter the relative adaptiveness chart to generate a lookup table with the "optimal" codon.  
 ```{r buildLUT}
 codon_lookup_tbl <- rel_adaptiveness_chart %>%
-    dplyr::select(AA, Codon, contains("relAdapt")) %>%
-    pivot_longer(-c(AA, Codon),
-                 values_to = "relAdapt",
-                 names_to = c("species",NA),
-                 names_sep = "_") %>%
-    group_by(species, AA) %>%
-    dplyr::top_n(1,relAdapt)%>%
-    dplyr::select(-relAdapt) %>%
-    pivot_wider(values_from = Codon,
-                names_from = species,
-                names_prefix = "Codon.")
-
-### P. pacificus
-#### P. pacificus data already comes as a list of the optimal codons
-#### Load P. pacificus list of codons used in 10% highly expressed genes
-#### Source: Han *et al* 2020 https://www.genetics.org/content/216/4/947
-Pp_codonLut <- read_csv('../Data/Pp_optimal_codons.csv', 
-                          quote = "", 
-                          col_types = 'fc'
-)%>%
-    dplyr::mutate(Codon = tolower(Codon)) %>%
-    dplyr::rename(Codon.Pp = Codon)
-
-codon_lookup_tbl <- dplyr::left_join(codon_lookup_tbl, Pp_codonLut,
-                                     by = "AA")
+  dplyr::select(AA, Codon, contains("relAdapt")) %>%
+  pivot_longer(-c(AA, Codon),
+               values_to = "relAdapt",
+               names_to = c("species",NA),
+               names_sep = "_") %>%
+  group_by(species, AA) %>%
+  dplyr::top_n(1,relAdapt)%>%
+  dplyr::select(-relAdapt) %>%
+  pivot_wider(values_from = Codon,
+              names_from = species,
+              names_prefix = "Codon.")
 
 write_csv(codon_lookup_tbl,
           path = "../Outputs/codon_lut.csv")
@@ -135,7 +150,7 @@ Take the list of optimal codons for each species, and determine the fractional G
 
 calc.sequence.stats <- function(x){
   paste(x, collapse = "") %>%
-  s2c() %>%
+    s2c() %>%
     GC()
 }
 

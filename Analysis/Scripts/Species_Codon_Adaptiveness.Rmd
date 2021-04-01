@@ -1,20 +1,18 @@
 ---
 title: "Species Codon Adaptiveness"
+author: "Astra S. Bryant, PhD"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
     df_print: paged
-    code_folding: hide
-    toc: yes
-    toc_depth: '3'
-  pdf_document:
-    number_sections: yes
     toc: yes
     toc_depth: 3
-date: "11/19/2020"
+    toc_float: TRUE
+    number_sections: true
 ---
 
 # Introduction  
-The purpose of this document is to examine codon usage patterns at the genome-wide level across four *Strongyloides spp.*, *Brugia malayi*, *Nippostrongylus brasiliensis* and *C. elegans*. In addition, this documents examines codon usage patterns for functional subsets of genes in *Strongyloides* species and *C. elegans*.  
+The purpose of this document is to examine codon usage patterns at the genome-wide level across four *Strongyloides* species, *Brugia malayi*, *Nippostrongylus brasiliensis*, *Pristionchus pacificus*, and *Caenorhabditis elegans*. In addition, this documents examines codon usage patterns for functional subsets of genes in *Strongyloides* species and *C. elegans*.  
 
 For the functional subsets, eight groups are analyzed:  
 1) Top 2% of codon adapted genes in each genome  
@@ -24,7 +22,7 @@ For the functional subsets, eight groups are analyzed:
 5) Top 2% of *Strongyloides* genes expressed in free-living adult females.  
 
 # Data Preprocessing  
-Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and February 5, 2021. The .fa files were used as input to the Wild Worm Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
+Full lists of CDS sequences for *S. stercoralis*, *S. ratti*, *S. papillosus*, *S. venezuelensis*, *B. malayi*, *N. brasiliensis*, *P. pacificus*, and *C. elegans* were download from Wormbase ParaSite (v15) between November 17, 2020 and March 31, 2021. The .fa files were used as input to the Wild Worm Codon Adapter App. For each species an excel report containing the computed codon adaptation index values relative to the available built-in codon usage rules were downloaded; these file are uploaded the code chunks below.  
 
 ```{r setup, echo=FALSE}
 suppressPackageStartupMessages({
@@ -68,6 +66,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
             Sp = '../Data/Sp_Codon_Usage_Report.xlsx',
             Sv = '../Data/Sv_Codon_Usage_Report.xlsx',
             Nb = '../Data/Nb_Codon_Usage_Report.xlsx',
+            Pp = '../Data/Pp_Codon_Usage_Report.xlsx',
             Ce = '../Data/Ce_Codon_Usage_Report.xlsx',
             Bm = '../Data/Bm_Codon_Usage_Report.xlsx')
   dat.genomic <- sapply(temp, read_excel, 
@@ -85,11 +84,10 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
   dat.genomic.cleaned <- lapply(dat.genomic, function(x){
     x %>%
       dplyr::mutate(transcriptID = geneID) %>%
-      dplyr::mutate(Nb_CAI = if("Nb_CAI" %in% colnames(.)) Nb_CAI else NA
-      )
-    
-    
-    
+      dplyr::mutate(Nb_CAI = if("Nb_CAI" %in% colnames(.)) Nb_CAI else NA) %>%
+      dplyr::mutate(Nb_CAI = if("Bm_CAI" %in% colnames(.)) Bm_CAI else NA) %>%
+      dplyr::mutate(Pp_CAI = if("Pp_CAI" %in% colnames(.)) Pp_CAI else NA)
+
   })
   names(dat.genomic.cleaned) <- c("Ss", "Sr", "Sp", "Sv", "Nb", "Ce", "Bm")
   
@@ -131,6 +129,12 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
     add_column(dat.genomic.df, .)
   
   dat.genomic.df <- dat.genomic.cleaned %>%
+    map("Pp_CAI") %>%
+    unlist() %>%
+    as_tibble_col(column_name = "Pp_CAI") %>%
+    add_column(dat.genomic.df, .)
+  
+  dat.genomic.df <- dat.genomic.cleaned %>%
     map("Ce_CAI") %>%
     unlist() %>%
     as_tibble_col(column_name = "Ce_CAI") %>%
@@ -152,6 +156,7 @@ if (!file.exists(c("../Data/tidy_genomic_CAI.csv"))) {
       transcriptID %in% dat.genomic$Sp$geneID ~ 'Sp',
       transcriptID %in% dat.genomic$Sv$geneID ~ 'Sv',
       transcriptID %in% dat.genomic$Bm$geneID ~ 'Bm',
+      transcriptID %in% dat.genomic$Pp$geneID ~ 'Pp',
       transcriptID %in% dat.genomic$Nb$geneID ~ 'Nb',
       transcriptID %in% dat.genomic$Ce$geneID ~ 'Ce',
     ))
@@ -182,7 +187,7 @@ dat.genomic.df <- suppressWarnings(
                                    "Ss","Sr",
                                    "Sp", "Sv",
                                    "Nb","Bm",
-                                   "Ce"
+                                   "Pp","Ce"
                                  )))%>%
   group_by(species)
 
@@ -191,6 +196,7 @@ species.specific.dat.df <- dat.genomic.df %>%
     species == 'Ce' ~ Ce_CAI,
     species == 'Bm' ~ Bm_CAI,
     species == 'Nb' ~ Nb_CAI,
+    species == 'Pp' ~ Pp_CAI,
     TRUE ~ Sr_CAI
   )) %>%
   dplyr::mutate(outgroup_CAI = case_when(
@@ -218,6 +224,7 @@ plot_distributions <- function(dat,
                                    "S. venezuelensis",
                                    "N. brasiliensis",
                                    "B. malayi",
+                                   "P. pacificus",
                                    "C. elegans"
                         )) +
     
@@ -245,6 +252,7 @@ species_adaptiveness_plot <- plot_distributions(species.specific.dat.df,
                                                 "Strongyloides species values relative to S. ratti usage rules
        C. elegans values relative to C. elegans usage rules.
        N. brasilensis values relative to N. brasilensis usage rules.
+       P. pacificus values relative to P. pacificus usage rules.
        B. malayi values relative to B. malayi ussage rules.")
 
 species_adaptiveness_plot
@@ -280,6 +288,7 @@ temp <- species.specific.dat.df %>%
     species == 'Sv' ~ 'Str',
     species == 'Nb' ~ 'Nb',
     species == 'Bm' ~ 'Bm',
+    species == 'Pp' ~ 'Pp',
     species == 'Ce' ~ 'Ce'
   )) %>%
   dplyr::mutate(group = as_factor(group))
@@ -330,7 +339,8 @@ percentile = 0.02
 # not B. malayi or N. brasiliensis
 species.specific.dat.df<-species.specific.dat.df %>%
   dplyr::filter(species != "Bm") %>%
-  dplyr::filter(species != "Nb")
+  dplyr::filter(species != "Nb")%>%
+  dplyr::filter(species != "Pp")
 
 dat.Top <- species.specific.dat.df %>%
   #dplyr::filter(species != "Ce") %>%
