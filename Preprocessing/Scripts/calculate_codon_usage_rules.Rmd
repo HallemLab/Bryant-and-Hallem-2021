@@ -28,8 +28,8 @@ Sources for codon count data or preferred codons for each species are as follows
 
 -  *Strongyloides spp.* : [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/); counts taken from 50 most common expressed sequence tag clusters (putative genes).  
 -  *Caenorhabditis elegans* : [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)   
--  *Pristionchus pacificus* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (7th bin, top ~10%).  
--  *Brugia malayi* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (7th bin, top ~10%).  
+-  *Pristionchus pacificus* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (bins 8-11, top ~10%).  
+-  *Brugia malayi* : [Han *et al* 2020](https://www.genetics.org/content/216/4/947); highly expressed genes (bins 8-11, top ~10%).  
 -  *Nippostrongylus brasiliensis* : codon usage table generated from the 10% of *Nippostrongylus brasiliensis* genes with highest RNA-seq expression levels across samples; RNA-seq expression downloaded from [WormBase ParaSite](https://parasite.wormbase.org/expression/nippostrongylus_brasiliensis_prjeb511/index.html)  
 
 ```{r setup, include=FALSE}
@@ -88,11 +88,11 @@ codon.freq2 <- lapply(names(files), function(X) {
     dplyr::mutate(freq = freq * 100) %>%
     dplyr::group_by(AA, Codon) %>%
     dplyr::arrange(AA, Codon) %>%
+    dplyr::filter(bin > 7) %>%
+    dplyr::summarize(freq = mean(freq))%>%
     dplyr::rename_with(gsub, 
                        starts_with("freq"), X,
-                       paste0(name,"_optimal")) %>%
-    dplyr::filter(bin == 7) %>%
-    dplyr::select(-bin)
+                       paste0(name,"_optimal"))
 })
 
 names(codon.freq2) <- names(files)

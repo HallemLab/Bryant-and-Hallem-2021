@@ -2811,9 +2811,9 @@ div.tocify {
 </li>
 <li><em>Caenorhabditis elegans</em> : <a href="https://www.ncbi.nlm.nih.gov/books/NBK20194/">Sharp and Bradnam, 1997</a><br />
 </li>
-<li><em>Pristionchus pacificus</em> : <a href="https://www.genetics.org/content/216/4/947">Han <em>et al</em> 2020</a>; highly expressed genes (11th bin).<br />
+<li><em>Pristionchus pacificus</em> : <a href="https://www.genetics.org/content/216/4/947">Han <em>et al</em> 2020</a>; highly expressed genes (bins 8-11, top ~10%).<br />
 </li>
-<li><em>Brugia malayi</em> : <a href="https://www.genetics.org/content/216/4/947">Han <em>et al</em> 2020</a>; highly expressed genes (11th bin).<br />
+<li><em>Brugia malayi</em> : <a href="https://www.genetics.org/content/216/4/947">Han <em>et al</em> 2020</a>; highly expressed genes (bins 8-11, top ~10%).<br />
 </li>
 <li><em>Nippostrongylus brasiliensis</em> : codon usage table generated from the 10% of <em>Nippostrongylus brasiliensis</em> genes with highest RNA-seq expression levels across samples; RNA-seq expression downloaded from <a href="https://parasite.wormbase.org/expression/nippostrongylus_brasiliensis_prjeb511/index.html">WormBase ParaSite</a></li>
 </ul>
@@ -2865,14 +2865,15 @@ codon.freq2 &lt;- lapply(names(files), function(X) {
     dplyr::mutate(freq = freq * 100) %&gt;%
     dplyr::group_by(AA, Codon) %&gt;%
     dplyr::arrange(AA, Codon) %&gt;%
+    dplyr::filter(bin &gt; 7) %&gt;%
+    dplyr::summarize(freq = mean(freq))%&gt;%
     dplyr::rename_with(gsub, 
                        starts_with(&quot;freq&quot;), X,
-                       paste0(name,&quot;_optimal&quot;)) %&gt;%
-    dplyr::filter(bin == 7) %&gt;%
-    dplyr::select(-bin)
-})
-
-names(codon.freq2) &lt;- names(files)
+                       paste0(name,&quot;_optimal&quot;))
+})</code></pre>
+<pre><code>## `summarise()` regrouping output by 'AA' (override with `.groups` argument)
+## `summarise()` regrouping output by 'AA' (override with `.groups` argument)</code></pre>
+<pre class="r"><code>names(codon.freq2) &lt;- names(files)
 
 codon.freq &lt;- c(codon.freq, codon.freq2)
 
@@ -2902,8 +2903,7 @@ write_csv(rel_adaptiveness_chart,
 </div>
 <div id="generate-optimal-codon-lookup-tables-for-each-species" class="section level2">
 <h2><span class="header-section-number">2.2</span> Generate optimal codon lookup tables for each species</h2>
-<p>For each species, filter the relative adaptiveness chart to generate a lookup table with the “optimal” codon. Then, load <em>P. pacificus</em> and <em>B. malayi</em> data, which already comes as a list of the optimal codons.<br />
-<em>P. pacificus</em> and <em>B. malayi</em> source: Han <em>et al</em> 2020 <a href="https://www.genetics.org/content/216/4/947" class="uri">https://www.genetics.org/content/216/4/947</a>; top 10% highly expressed genes for each species.</p>
+<p>For each species, filter the relative adaptiveness chart to generate a lookup table with the “optimal” codon.</p>
 <pre class="r"><code>codon_lookup_tbl &lt;- rel_adaptiveness_chart %&gt;%
   dplyr::select(AA, Codon, contains(&quot;relAdapt&quot;)) %&gt;%
   pivot_longer(-c(AA, Codon),
@@ -2935,7 +2935,7 @@ codon_lookup_tbl %&gt;%
   dplyr::summarise(across(everything(), calc.sequence.stats))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["Codon.Sr"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Codon.Ce"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Codon.Bm"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Codon.Pp"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Codon.Nb"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.3333333","2":"0.5079365","3":"0.3174603","4":"0.4920635","5":"0.5396825"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["Codon.Sr"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Codon.Ce"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Codon.Bm"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Codon.Pp"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Codon.Nb"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.3333333","2":"0.5079365","3":"0.3174603","4":"0.5555556","5":"0.5396825"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
