@@ -1,5 +1,5 @@
 # Wild Worm Codon Adapter Preprocessing & Analysis
-Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-based Shiny app for automatic codon optimzation and analysis based on codon usage rules in "wild" worm species, including: *Strongyloidides* species, *Pristionchus pacificus*, *Nippostrongylus brasiliensis*, *Brugia malayi*, as well as custom codon usage rules provided by users. 
+Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-based Shiny app for automatic codon optimzation and analysis based on codon usage rules in "wild" non-*Caenorhabditis* nematode species, including: *Strongyloides* species, *Nippostrongylus brasiliensis*, *Brugia malayi*, *Pristionchus pacificus*, as well as *Caenorhabditis elegans*. It also permits codon optimization via user-provided custom optimal codon sets. Furthermore, this tool enables users to perform bulk calculations of codon adaptiveness relative to species-specific codon usage rules.
 
 ## Table of Contents  
 1. [General Information](#general-information)
@@ -7,14 +7,12 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 3. [Analysis Code](#analysis-code)
 4. [Supplemental Files](#supplemental-files)
 5. [App Access](#app-access)
-6. [References](#references)
-7. [Sources](#sources)
-8. [License](#license)
-9. [Authors](#authors)
+6. [Sources](#sources)
+7. [License](#license)
+8. [Authors](#authors)
 
 ## General Information
 This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from Bryant and Hallem (2021). 
-
 ## App Preprocessing
 This subfolder contains preprocessing scripts for the Wild Worm Codon Adapter App. 
 
@@ -36,13 +34,6 @@ This subfolder contains supplemental files from Bryant and Hallem (2021). See su
 To access a stable deployment of the Wild Worm Codon Adapter, please visit: [https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/](https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/)  
 
 To view full source code for the *Strongyloides* RNAseq Browser, please visit the [app repository](https://github.com/HallemLab/Wild_Worm_Codon_Adapter). 
-
-## References
-1. [Mitreva *et al* (2006). Codon usage patterns in Nematoda: analysis based on over 25 million codons in thirty-two species. *Genome Biology* 7: R75](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/). 
-2. [Sharp and Bradnam (1997). Appendix 3: Codon Usage in *C. elegans*. In: *C. elegans* II. 2nd edition; Eds: Riddle, Blumenthal, Meyer *et al*. Cold Spring Harbor Laboratory Press.](https://www.ncbi.nlm.nih.gov/books/NBK20194/).
-3. [Sharp and Li (1987). The Codon Adaptation Index: a measure of directional synonymous codon usage bias, and its potential applications. *Nucleic Acids Research* 15: 1281-95](https://pubmed.ncbi.nlm.nih.gov/3547335/). 
-4. [Jansen *et al* (2003). Revisiting the codon adaptation index from a whole-genome perspective: analyzing the relationship between gene expression and codon occurrence in yeast using a variety of models. *Nucleic Acids Research* 31: 2242-51](http://www.ncbi.nlm.nih.gov/pubmed/12682375). 
-5. [(Han *et al*, 2020)](https://www.genetics.org/content/216/4/947).
 
 ## Sources  
 * [Shiny](https://shiny.rstudio.com/) - UI framework
