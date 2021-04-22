@@ -12,7 +12,7 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 8. [Authors](#authors)
 
 ## General Information
-This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from Bryant and Hallem (2021). 
+This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from [Bryant and Hallem (2021)](https://www.biorxiv.org/content/10.1101/2021.02.18.431865v1.full). 
 ## App Preprocessing
 This subfolder contains preprocessing scripts for the Wild Worm Codon Adapter App. 
 
@@ -43,7 +43,7 @@ To view full source code for the *Strongyloides* RNAseq Browser, please visit th
   - *Strongyloides spp*: [Mitreva *et al* 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1779591/)  
   - *Pristionchus spp*: [Han *et al* (2020)](https://www.genetics.org/content/216/4/947)
   - *Brugia malayi*: [Han *et al* (2020)](https://www.genetics.org/content/216/4/947)
-  - *Nippostrongylus brasiliensis*: [Wormbase ParaSite](https://parasite.wormbase.org/index.html)  
+  - *Nippostrongylus brasiliensis*: [Wormbase ParaSite](https://parasite.wormbase.org/index.html) and [Eccles *et al* (2018)](https://bmcbiol.biomedcentral.com/articles/10.1186/s12915-017-0473-4)   
   - *C. elegans*: [Sharp and Bradnam, 1997](https://www.ncbi.nlm.nih.gov/books/NBK20194/)  
   
 ## License  
