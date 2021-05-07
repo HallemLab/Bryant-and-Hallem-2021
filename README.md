@@ -12,7 +12,8 @@ Preprocessing and analysis related to the Wild Worm Codon Adapter app, a web-bas
 8. [Authors](#authors)
 
 ## General Information
-This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from [Bryant and Hallem (2021)](https://www.biorxiv.org/content/10.1101/2021.02.18.431865v1.full). 
+This repository contains the preprocessing scripts for generating necessary inputs for the Wild Worm Codon Adapter app. It also contains supplemental files and analysis code from [Bryant and Hallem (2021)](https://academic.oup.com/g3journal/advance-article/doi/10.1093/g3journal/jkab146/6259089). 
+
 ## App Preprocessing
 This subfolder contains preprocessing scripts for the Wild Worm Codon Adapter App. 
 
@@ -33,7 +34,7 @@ This subfolder contains supplemental files from Bryant and Hallem (2021). See su
 ## App Access
 To access a stable deployment of the Wild Worm Codon Adapter, please visit: [https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/](https://asbryant.shinyapps.io/Wild_Worm_Codon_Adapter/)  
 
-To view full source code for the *Strongyloides* RNAseq Browser, please visit the [app repository](https://github.com/HallemLab/Wild_Worm_Codon_Adapter). 
+To view full source code for the Wild Worm Codon Adapter, please visit the [app repository](https://github.com/HallemLab/Wild_Worm_Codon_Adapter). 
 
 ## Sources  
 * [Shiny](https://shiny.rstudio.com/) - UI framework
